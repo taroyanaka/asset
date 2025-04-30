@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ja">
+<script>
+// let test = true; // テストモードのフラグ
+const test = false;
+</script>
+<head>
+  <meta charset="UTF-8">
+  <title>ターンバトル</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: sans-serif;
+      padding: 20px;
+      display: flex; /* フレックスボックスでレイアウト */
+    }
+    .left-column {
+      width: 30%; /* 左カラムの幅 */
+      margin-right: 10px;
+    }
+    .right-column {
+      width: 70%; /* 右カラムの幅 */
+      display: flex;
+      flex-direction: column;
+    }
+    .log {
+      height: 90vh;
+      overflow-y: auto;
+      border: 1px solid #0f0;
+      padding: 10px;
+    }
+    .stats, .actions, .enemies {
+      margin-bottom: 10px;
+      border: 1px solid #0f0;
+      padding: 10px;
+    }
+    button {
+      margin: 2px;
+    }
+    .enemy {
+      display: inline-block;
+      border: 1px solid #0f0;
+      padding: 5px;
+      margin: 2px;
+    }
+    .dead {
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="left-column">
+    <div class="log" id="log"></div>
+  </div>
+  <div class="right-column">
+    <div class="stats" id="stats"></div>
+    <div class="enemies" id="enemies"></div>
+    <div class="actions" id="actions"></div>
+  </div>
+
+<script>
+  const log = document.getElementById('log');
+  const stats = document.getElementById('stats');
+  const enemiesDiv = document.getElementById('enemies');
+  const actions = document.getElementById('actions');
+
+  const ENEMY_FRIENDLY_PER = 50;
+
+const JOBS = {
+戦士:{hp:80,mp:0,str:12,int:2},
+僧侶:{hp:60,mp:20,str:6,int:8},
+魔法使い:{hp:50,mp:30,str:4,int:12},
+黒魔道士:{hp:40,mp:40,str:2,int:16},
+白魔道士:{hp:50,mp:30,str:4,int:12},
+};
+const JOB_GROWTH = {
+    戦士: {
+        maxHp: [5, 10], // HPの成長幅
+        maxMp: [0, 0],  // MPの成長幅
+        str: [2, 4],    // 力の成長幅
+        int: [0, 1]     // 賢さの成長幅
+    },
+    僧侶: {
+        maxHp: [3, 6],
+        maxMp: [3, 6],
+        str: [1, 2],
+        int: [2, 4]
+    },
+    魔法使い: {
+        maxHp: [2, 5],
+        maxMp: [4, 8],
+        str: [0, 1],
+        int: [3, 5]
+    },
+    // 黒魔道士はHPとstrは全く上昇しない代わりにMPとintが大きく上昇する(特にMP)
+    黒魔道士: {
+        maxHp: [0, 0],
+        maxMp: [7, 12],
+        str: [0, 0],
+        int: [6, 10]
+    },
+    // 白魔道士はHPとstrは全く上昇しない代わりにMPとintが大きく上昇する(特にint)
+    白魔道士: {
+        maxHp: [0, 0],
+        maxMp: [6, 10],
+        str: [0, 0],
+        int: [8, 12]
+    },
+};
+
+// ゲームのテンポのために初期レベル帯のエネミーの経験値は高く設定
+let ENEMY_LIST = [
+{name: 'スライム', level: 1, hp: 30, mp: 0, exp: 50, maxHp: 80, maxMp: 0, str: 12, int: 2},
+{name: 'バンシー', level: 1, hp: 25, mp: 10, exp: 60, maxHp: 25, maxMp: 10, str: 8, int: 6},
+{name: 'コボルト', level: 1, hp: 20, mp: 0, exp: 90, maxHp: 20, maxMp: 0, str: 10, int: 4},
+{name: 'ゴブリン', level: 2, hp: 40, mp: 0, exp: 90, maxHp: 40, maxMp: 0, str: 12, int: 5},
+{name: 'バジリスク', level: 2, hp: 35, mp: 5, exp: 100, maxHp: 35, maxMp: 5, str: 14, int: 7},
+{name: 'ケルベロス', level: 2, hp: 30, mp: 0, exp: 110, maxHp: 30, maxMp: 0, str: 16, int: 6},
+{name: 'サイクロプス', level: 3, hp: 60, mp: 0, exp: 30, maxHp: 60, maxMp: 0, str: 18, int: 8},
+{name: 'リッチ', level: 3, hp: 50, mp: 0, exp: 28, maxHp: 50, maxMp: 0, str: 14, int: 12},
+{name: 'ウォーロック', level: 3, hp: 31, mp: 20, exp: 32, maxHp: 31, maxMp: 20, str: 10, int: 14},
+{name: 'キメラ', level: 4, hp: 49, mp: 15, exp: 40, maxHp: 49, maxMp: 15, str: 20, int: 10},
+{name: 'タロス', level: 4, hp: 65, mp: 0, exp: 44, maxHp: 65, maxMp: 0, str: 22, int: 8},
+{name: 'ストーンゴーレム', level: 4, hp: 80, mp: 0, exp: 50, maxHp: 80, maxMp: 0, str: 24, int: 6},
+{name: 'ミミック', level: 5, hp: 15, mp: 0, exp: 300, maxHp: 15, maxMp: 0, str: 30, int: 20},
+{name: 'ドラゴン', level: 5, hp: 70, mp: 30, exp: 80, maxHp: 70, maxMp: 30, str: 28, int: 18},
+{name: 'ゴーレム', level: 5, hp: 120, mp: 0, exp: 90, maxHp: 120, maxMp: 0, str: 32, int: 10},
+{name: 'デスナイト', level: 6, hp: 140, mp: 0, exp: 100, maxHp: 140, maxMp: 0, str: 34, int: 12},
+{name: 'デモンナイト', level: 6, hp: 112, mp: 25, exp: 120, maxHp: 112, maxMp: 25, str: 30, int: 16},
+{name: 'アークデーモン', level: 6, hp: 126, mp: 50, exp: 140, maxHp: 126, maxMp: 50, str: 36, int: 20},
+{name: 'ハイドラ', level: 7, hp: 200, mp: 0, exp: 160, maxHp: 200, maxMp: 0, str: 40, int: 14},
+{name: 'バアル', level: 7, hp: 154, mp: 60, exp: 180, maxHp: 154, maxMp: 60, str: 38, int: 22},
+{name: 'ベリアル', level: 8, hp: 210, mp: 100, exp: 300, maxHp: 210, maxMp: 100, str: 42, int: 28},
+{name: 'アスモデウス', level: 9, hp: 280, mp: 150, exp: 500, maxHp: 280, maxMp: 150, str: 50, int: 30},
+{name: 'ルシファー', level: 10, hp: 350, mp: 200, exp: 800, maxHp: 350, maxMp: 200, str: 60, int: 40},
+{name: 'バフォメット', level: 10, hp: 420, mp: 250, exp: 1000, maxHp: 420, maxMp: 250, str: 65, int: 45},
+{name: 'ティアマト', level: 10, hp: 490, mp: 300, exp: 1200, maxHp: 490, maxMp: 300, str: 70, int: 50},
+{name: 'シヴァ', level: 10, hp: 560, mp: 350, exp: 1500, maxHp: 560, maxMp: 350, str: 75, int: 55},
+{name: 'ラミア', level: 10, hp: 630, mp: 400, exp: 1800, maxHp: 630, maxMp: 400, str: 80, int: 60},
+{name: 'ヴァルプルギス', level: 10, hp: 700, mp: 450, exp: 2000, maxHp: 700, maxMp: 450, str: 85, int: 65},
+{name: 'アヌビス', level: 10, hp: 770, mp: 500, exp: 2200, maxHp: 770, maxMp: 500, str: 90, int: 70},
+];
+
+// test trueの時はhpを0.1倍でexpを100倍(1行で)
+ENEMY_LIST = ENEMY_LIST.map(e => test ? { ...e, hp: Math.floor(e.hp * 0.1), exp: Math.floor(e.exp * 100) } : e);
+
+
+
+  let heroes = ['サトウ','スズキ'].map((n,i)=>createHero(n,Object.keys(JOBS)[i]));
+  let enemies = [];
+
+
+
+let ITEM_LIST = [
+    // itemは現在はhealのみに対応
+    { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 },
+    { name: 'やくそう2', type: 'heal', range: 'single', val: [30, 50], cost: 0 },
+    // { name: 'やくそう3', type: 'heal', range: 'single', val: [50, 70], cost: 0 },
+    { name: 'やくそう4', type: 'heal', range: 'single', val: [70, 100], cost: 0 },
+    { name: 'やくそう5', type: 'heal', range: 'single', val: [100, 150], cost: 0 },
+    // 効果範囲全員を少量回復するitem
+    // { name: '全員やくそう1', type: 'heal', range: 'all', val: [10, 20], cost: 0 },
+    { name: '全員やくそう2', type: 'heal', range: 'all', val: [20, 30], cost: 0 },
+    { name: '全員やくそう3', type: 'heal', range: 'all', val: [30, 50], cost: 0 },
+    // { name: '全員やくそう4', type: 'heal', range: 'all', val: [50, 70], cost: 0 },
+
+
+// mp回復itemを実装
+    { name: 'まほうのせいすい1', type: 'mp', range: 'single', val: [20, 30], cost: 0 },
+    // { name: 'まほうのせいすい2', type: 'mp', range: 'single', val: [30, 50], cost: 0 },
+    // { name: 'まほうのせいすい3', type: 'mp', range: 'single', val: [50, 70], cost: 0 },
+    // { name: 'まほうのせいすい4', type: 'mp', range: 'single', val: [70, 100], cost: 0 },
+    { name: 'まほうのせいすい5', type: 'mp', range: 'single', val: [100, 150], cost: 0 },
+    // 効果範囲全員を少量回復するitem
+    { name: '全員まほうのせいすい1', type: 'mp', range: 'all', val: [10, 20], cost: 0 },
+    // { name: '全員まほうのせいすい2', type: 'mp', range: 'all', val: [20, 30], cost: 0 },
+    // { name: '全員まほうのせいすい3', type: 'mp', range: 'all', val: [30, 50], cost: 0 },
+    { name: '全員まほうのせいすい4', type: 'mp', range: 'all', val: [50, 70], cost: 0 },
+
+];
+
+let inventory = [
+    { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 } // 初期アイテム
+]; // 所持アイテムリスト
+
+
+const SPELLS = {
+    chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
+    itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
+};
+
+const ULT_SPELLS = {
+    kuro: { name: '黒', cost: 6, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 黒魔道士: 1 } },
+    shiro: { name: '白', cost: 6, type: 'heal', range: 'all', val: [10, 15], requiredJobs: { 白魔道士: 1 } },
+
+    saisei: { name: '再生', cost: 20, type: 'heal', range: 'single', val: [50, 70], requiredJobs: { 僧侶: 3 } },
+    tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
+    fukaiKuro: { name: '深い黒', cost: 25, type: 'dmg', range: 'all', val: [30, 50], requiredJobs: { 黒魔道士: 6 } },
+    mabayuiShiro: { name: '眩い白', cost: 25, type: 'heal', range: 'all', val: [30, 50], requiredJobs: { 白魔道士: 6 } },
+    sakebi: { name: '叫び', cost: 0, type: 'dmg', range: 'all', val: [5, 10], requiredJobs: { 戦士: 4 } },
+    houkou: { name: '咆哮', cost: 0, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 戦士: 6 } },
+    tetsuheiYu: { name: '鉄壁癒', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 僧侶: 2 } },
+    senshinOn: { name: '戦神恩', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 僧侶: 4 } },
+    seisenHa: { name: '聖戦波', cost: 15, type: 'heal', range: 'all', val: [70, 100], requiredJobs: { 戦士: 6, 僧侶: 6 } },
+    makenJin: { name: '魔斬刃', cost: 5, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 魔法使い: 2 } },
+    kenmaJin: { name: '剣魔陣', cost: 10, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 魔法使い: 4 } },
+    metsuSenKa: { name: '滅戦華', cost: 15, type: 'dmg', range: 'all', val: [70, 100], requiredJobs: { 戦士: 6, 魔法使い: 6 } },
+    kokuenGe: { name: '黒炎撃', cost: 5, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 黒魔道士: 2 } },
+    anzanJin: { name: '暗斬陣', cost: 10, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 黒魔道士: 4 } },
+    magunSo: { name: '魔軍葬', cost: 15, type: 'dmg', range: 'all', val: [70, 100], requiredJobs: { 戦士: 6, 黒魔道士: 6 } },
+    seigoJin: { name: '聖護陣', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 白魔道士: 2 } },
+    kosenKo: { name: '光戦鼓', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 白魔道士: 4 } },
+    tengiOn: { name: '天儀恩', cost: 15, type: 'heal', range: 'all', val: [70, 100], requiredJobs: { 戦士: 6, 白魔道士: 6 } },
+    iyaseiKo: { name: '癒精光', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 魔法使い: 2 } },
+    kamiiyuWa: { name: '神癒輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 魔法使い: 4 } },
+    seireiWa: { name: '聖霊和', cost: 30, type: 'heal', range: 'all', val: [70, 100], requiredJobs: { 僧侶: 6, 魔法使い: 6 } },
+    yamiyuHo: { name: '闇癒法', cost: 10, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 黒魔道士: 2 } },
+    kuroFukuin: { name: '黒福音', cost: 20, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 黒魔道士: 4 } },
+    haseiSho: { name: '破聖唱', cost: 30, type: 'dmg', range: 'all', val: [70, 100], requiredJobs: { 僧侶: 6, 黒魔道士: 6 } },
+    seiyuJutsu: { name: '清癒術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 白魔道士: 2 } },
+    kodoRin: { name: '光導輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 白魔道士: 4 } },
+    tenyuKi: { name: '天癒祈', cost: 30, type: 'heal', range: 'all', val: [70, 100], requiredJobs: { 僧侶: 6, 白魔道士: 6 } },
+    mashoJin: { name: '魔焼陣', cost: 10, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 魔法使い: 2, 黒魔道士: 2 } },
+    meishoHa: { name: '冥衝波', cost: 20, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 黒魔道士: 4 } },
+    kokuMetsuSho: { name: '黒滅翔', cost: 30, type: 'dmg', range: 'all', val: [70, 100], requiredJobs: { 魔法使い: 6, 黒魔道士: 6 } },
+    seikoJutsu: { name: '精光術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 魔法使い: 2, 白魔道士: 2 } },
+    kamiiyuMon: { name: '神癒紋', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 白魔道士: 4 } },
+    kokoKaiKi: { name: '光界祈', cost: 30, type: 'heal', range: 'all', val: [70, 100], requiredJobs: { 魔法使い: 6, 白魔道士: 6 } },
+    konmeiYu: { name: '昏明癒', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 黒魔道士: 2, 白魔道士: 2 } },
+    seiAnRin: { name: '聖闇輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 黒魔道士: 4, 白魔道士: 4 } },
+    sokyokuWa: { name: '双極和', cost: 30, type: 'heal', range: 'all', val: [70, 100], requiredJobs: { 黒魔道士: 6, 白魔道士: 6 } },
+    tenchiSaiha: { name: '天地砕破', cost: 50, type: 'dmg', range: 'all', val: [100, 150], requiredJobs: { 戦士: 4, 僧侶: 4, 魔法使い: 4 } },
+    kuroseiSojin: { name: '黒聖葬陣', cost: 50, type: 'dmg', range: 'all', val: [100, 150], requiredJobs: { 戦士: 4, 僧侶: 4, 黒魔道士: 4 } },
+    kohekiShinsoku: { name: '光壁神息', cost: 50, type: 'heal', range: 'all', val: [100, 150], requiredJobs: { 戦士: 4, 僧侶: 4, 白魔道士: 4 } },
+    mametsuKenbu: { name: '魔滅剣舞', cost: 50, type: 'dmg', range: 'all', val: [100, 150], requiredJobs: { 戦士: 4, 魔法使い: 4, 黒魔道士: 4 } },
+    reikoTatejin: { name: '霊光盾陣', cost: 50, type: 'heal', range: 'all', val: [100, 150], requiredJobs: { 戦士: 4, 魔法使い: 4, 白魔道士: 4 } },
+    ankiShuen: { name: '暗輝終焉', cost: 50, type: 'dmg', range: 'all', val: [100, 150], requiredJobs: { 戦士: 4, 黒魔道士: 4, 白魔道士: 4 } },
+    seianRinbu: { name: '聖闇輪舞', cost: 50, type: 'dmg', range: 'all', val: [100, 150], requiredJobs: { 僧侶: 4, 魔法使い: 4, 黒魔道士: 4 } },
+    tenkyoYuko: { name: '天響癒光', cost: 50, type: 'heal', range: 'all', val: [100, 150], requiredJobs: { 僧侶: 4, 魔法使い: 4, 白魔道士: 4 } },
+    chuyoAnsoku: { name: '昼夜安息', cost: 50, type: 'heal', range: 'all', val: [100, 150], requiredJobs: { 僧侶: 4, 黒魔道士: 4, 白魔道士: 4 } },
+    mekkaiMashou: { name: '滅界魔唱', cost: 50, type: 'dmg', range: 'all', val: [100, 150], requiredJobs: { 魔法使い: 4, 黒魔道士: 4, 白魔道士: 4 } },
+};
+
+
+function createHero(name, job) {
+    let b = JOBS[job];
+    return {
+        name,
+        job,
+        level: 1,
+        exp: 0,
+        maxHp: b.hp,
+        hp: b.hp,
+        maxMp: b.mp,
+        mp: b.mp,
+        str: b.str,
+        int: b.int,
+        alive: true,
+        jobHistory: { [job]: 1 } // 初期ジョブを履歴に追加
+    };
+}
+
+function logWrite(msg) {
+    log.innerHTML = `<div>${msg}</div>` + log.innerHTML; // 最新のメッセージを先頭に追加
+    log.scrollTop = 0; // スクロールを一番上に設定
+}
+let seed = 43;
+function rand(min, max) {
+    seed = (seed * 9301 + 49297) % 233280;
+    return Math.floor(seed / 233280 * (max - min + 1)) + min;
+}
+
+
+  // 全員戦う関数を切り出し
+  function allHeroesAttack() {
+    heroes.filter(h => h.alive).forEach(hero => {
+        const target = enemies.find(e => e.alive); // 最初の生存している敵をターゲット
+        if (target) {
+            actionsQueue.push({ hero, action: 'attack', target });
+        }
+    });
+    executeHeroActions(); // 全員の攻撃を即時実行
+  }
+
+  function showHeroActionSelection() {
+    if (currentHeroIndex >= heroes.length) {
+        isEnemyTurn = true;
+        executeHeroActions();
+        return;
+    }
+
+    const hero = heroes[currentHeroIndex];
+    if (!hero.alive) {
+        currentHeroIndex++;
+        showHeroActionSelection();
+        return;
+    }
+
+    actions.innerHTML = `<strong>${hero.name}の行動を選択してください:</strong>`;
+    const atkButton = document.createElement('button');
+    atkButton.textContent = 'たたかう';
+    atkButton.onclick = () => {
+        showEnemySelectionForAttack(hero);
+    };
+    actions.appendChild(atkButton);
+
+    // 全員戦うボタンを追加 (testがtrueの時のみ表示)
+    if (test) {
+        const allAtkButton = document.createElement('button');
+        allAtkButton.textContent = '全員戦う';
+        allAtkButton.onclick = () => {
+            allHeroesAttack();
+        };
+        actions.appendChild(allAtkButton);
+    }
+
+    // 通常スペルの表示
+    Object.entries(SPELLS).forEach(([key, sp]) => {
+        if (hero.mp >= sp.cost) {
+            const spellButton = document.createElement('button');
+            spellButton.textContent = sp.name; // 日本語名を表示
+            spellButton.onclick = () => {
+                const target = sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget();
+                if (target) {
+                    actionsQueue.push({ hero, action: 'spell', spell: key, target });
+                    currentHeroIndex++;
+                    showHeroActionSelection();
+                }
+            };
+            actions.appendChild(spellButton);
+        }
+    });
+
+    // 習得済みスペルの表示
+    if (hero.learnedSpells && hero.learnedSpells.length > 0) {
+        hero.learnedSpells.forEach(spellKey => {
+            const sp = ULT_SPELLS[spellKey];
+            if (hero.mp >= sp.cost) {
+                const spellButton = document.createElement('button');
+                spellButton.textContent = sp.name; // 日本語名を表示
+                spellButton.onclick = () => {
+                    const target = sp.range === 'all' ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
+                    if (sp.range === 'all' || target) {
+                        actionsQueue.push({ hero, action: 'spell', spell: spellKey, target });
+                        currentHeroIndex++;
+                        showHeroActionSelection();
+                    }
+                };
+                actions.appendChild(spellButton);
+            }
+        });
+    }
+
+    if (inventory.length > 0) {
+        const itemButton = document.createElement('button');
+        itemButton.textContent = 'アイテム';
+        itemButton.onclick = () => {
+            showItemSelection(hero);
+        };
+        actions.appendChild(itemButton);
+    }
+}
+  function updateStats() {
+    stats.innerHTML = heroes.map(hero => {
+        const nextLevelExp = calculateExpForLevel(hero.level + 1) - hero.exp; // 次のレベルに必要な経験値を計算
+        return `
+            <div>
+                ${hero.name} (${hero.job} Lv${hero.level}) 
+                HP: ${hero.hp}/${hero.maxHp} 
+                MP: ${hero.mp}/${hero.maxMp} 
+                EXP: ${hero.exp} 
+                (次のLvまで: ${nextLevelExp > 0 ? nextLevelExp : 0})
+            </div>
+        `;
+    }).join('');
+}
+
+  function updateEnemies(){ enemiesDiv.innerHTML=enemies.map(e=>`<div class="enemy ${!e.alive?'dead':''}" data-id="${e.id}">${e.name} HP:${e.hp}/${e.maxHp}</div>`).join(''); }
+function spawnEnemies(count = 3) {
+    enemies = [];
+    const maxEnemyLevel = Math.max(...ENEMY_LIST.map(e => e.level)); // 最大レベルの取得
+    const minLevel = Math.min(Math.floor((battleCount - 1) / 2) + 1, maxEnemyLevel); // 最低レベル
+    const maxLevel = Math.min(minLevel + 1, maxEnemyLevel); // 最大レベル
+
+    // 指定されたレベル範囲内のモンスターをランダムに選択
+    let candidates = ENEMY_LIST.filter(e => e.level >= minLevel && e.level <= maxLevel);
+
+    // 候補がない場合は最大レベルの敵を選択
+    if (candidates.length === 0) {
+        candidates = ENEMY_LIST.filter(e => e.level === maxEnemyLevel);
+    }
+
+    for (let i = 0; i < count; i++) {
+        const e = JSON.parse(JSON.stringify(candidates[rand(0, candidates.length - 1)]));
+        e.maxHp = e.hp;
+        e.alive = true;
+        e.id = i;
+        enemies.push(e);
+    }
+}
+
+
+  function startBattle(enemyCount = 2) {
+    spawnEnemies(enemyCount);
+    logWrite(`敵が${enemies.length}体あらわれた！（戦闘回数: ${battleCount}）`);
+    updateEnemies();
+    isEnemyTurn = false; // プレイヤーのターンから開始
+    nextTurn();
+}
+
+function showBattleOptions() {
+    actions.innerHTML = `
+        <strong>次の戦闘を選択してください:</strong>
+        <button onclick="startBattle(1)">敵1体の戦闘</button>
+        <button onclick="startBattle(4)">敵4体の戦闘</button>
+        <button onclick="startBattle(8)">敵8体の戦闘</button>
+    `;
+    logWrite('次の戦闘の敵の数を選んでください。');
+}
+
+// 宿屋、神殿、修行場の各関数で次の戦闘選択肢を表示するように変更
+function visitInn() {
+    heroes = heroes.map(hero => {
+        if (hero.alive) {
+            return {
+                ...hero,
+                hp: hero.maxHp,
+                mp: hero.maxMp
+            };
+        }
+        return hero;
+    });
+    logWrite('宿屋で休んでHPとMPが全回復しました。');
+    showBattleOptions(); // 次の戦闘選択肢を表示
+}
+
+function visitTemple() {
+    actions.innerHTML = heroes.map((hero, index) => `
+      <div>
+        <strong>${hero.name}</strong> (${hero.job} Lv${hero.level})
+        <div>ジョブ履歴: ${Object.entries(hero.jobHistory || {}).map(([job, level]) => `${job}: Lv${level}`).join(', ') || 'なし'}</div>
+        <button onclick="changeJob(${index})">転職する</button>
+      </div>
+    `).join('');
+    logWrite('神殿で転職が可能です。');
+    const backButton = document.createElement('button');
+    backButton.textContent = '次の戦闘に進む';
+    backButton.onclick = showBattleOptions; // 次の戦闘選択肢を表示
+    actions.appendChild(backButton);
+}
+
+function visitTrainingGround() {
+    actions.innerHTML = heroes.map((hero, index) => `
+      <div>
+        <strong>${hero.name}</strong> (${hero.job} Lv${hero.level})
+        <div>ジョブ履歴: ${Object.entries(hero.jobHistory || {}).map(([job, level]) => `${job}: Lv${level}`).join(', ') || 'なし'}</div>
+        <button onclick="showSkillOptions(${index})">スキルを習得する</button>
+      </div>
+    `).join('');
+    logWrite('修行場でスキルを習得できます。');
+    const backButton = document.createElement('button');
+    backButton.textContent = '次の戦闘に進む';
+    backButton.onclick = showBattleOptions; // 次の戦闘選択肢を表示
+    actions.appendChild(backButton);
+}
+
+  let currentHeroIndex = 0; // 現在行動を選択中の味方のインデックス
+  let actionsQueue = []; // 味方の行動キュー
+  let isEnemyTurn = false; // 現在のターンが敵かどうか
+  let battleCount = 1; // 戦闘回数を初期化
+
+function allHeroesAttack() {
+    heroes.filter(h => h.alive).forEach(hero => {
+        const target = enemies.find(e => e.alive); // 最初の生存している敵をターゲット
+        if (target) {
+            actionsQueue.push({ hero, action: 'attack', target });
+        }
+    });
+    executeHeroActions(); // 全員の攻撃を即時実行
+}
+
+  function nextTurn() {
+    updateStats();
+    updateEnemies();
+    actions.innerHTML = '';
+
+    if (!heroes.some(h => h.alive)) {
+      logWrite('全滅…ゲームオーバー');
+      return;
+    }
+
+    if (!enemies.some(e => e.alive)) {
+      logWrite('敵を全滅させた！');
+      giveExp();
+      return;
+    }
+
+    if (isEnemyTurn) {
+      enemyTurn();
+    } else {
+      currentHeroIndex = 0;
+      actionsQueue = [];
+      showHeroActionSelection();
+    }
+  }
+
+  function showEnemySelectionForAttack(hero) {
+    actions.innerHTML = `<strong>攻撃する敵を選んでください:</strong>`;
+    enemies
+      .filter(e => e.alive)
+      .forEach(enemy => {
+        const enemyButton = document.createElement('button');
+        enemyButton.textContent = enemy.name;
+        enemyButton.onclick = () => {
+          actionsQueue.push({ hero, action: 'attack', target: enemy });
+          currentHeroIndex++;
+          showHeroActionSelection();
+        };
+        actions.appendChild(enemyButton);
+      });
+  }
+
+  function selectEnemyTarget() {
+    const aliveEnemies = enemies.filter(e => e.alive);
+    if (aliveEnemies.length === 0) return null;
+    const target = aliveEnemies[0]; // 最初の敵を選択（ランダムではなく順番に） 
+    logWrite(`ターゲット: ${target.name}`);
+    return target;
+  }
+
+  function selectHeroTarget() {
+    const aliveHeroes = heroes.filter(h => h.alive);
+    if (aliveHeroes.length === 0) return null;
+    const target = aliveHeroes[0]; // 最初の味方を選択（ランダムではなく順番に）
+    logWrite(`ターゲット: ${target.name}`);
+    return target;
+  }
+
+  function executeHeroActions() {
+    while (actionsQueue.length > 0) {
+      const { hero, action, spell, target } = actionsQueue.shift();
+      if (action === 'attack') {
+        const dmg = rand(hero.str, hero.str + 6);
+        target.hp -= dmg;
+        logWrite(`${hero.name}の攻撃！${target.name}に${dmg}ダメージ！`);
+        if (target.hp <= 0) {
+          target.alive = false;
+          target.hp = 0;
+          logWrite(`${target.name}を倒した！`);
+        }
+      } else if (action === 'spell') {
+        castSpell(hero, spell, target);
+      }
+    }
+
+    nextTurn(); // 敵のターンへ
+  }
+
+  function castSpell(hero, spell, target) {
+    // SPELLSとULT_SPELLSの両方を参照
+    const sp = SPELLS[spell] || ULT_SPELLS[spell];
+    if (!sp) {
+        logWrite(`${spell}は存在しないスペルです。`);
+        return;
+    }
+
+    hero.mp -= sp.cost;
+
+    if (sp.range === 'all') {
+        const targets = sp.type === 'heal' ? heroes.filter(h => h.alive) : enemies.filter(e => e.alive);
+        targets.forEach(t => {
+            applySpellEffect(hero, spell, sp, t);
+        });
+    } else if (sp.type === 'heal') {
+        const target = heroes.filter(h => h.alive).sort((a, b) => a.hp - b.hp)[0];
+        if (target) {
+            applySpellEffect(hero, spell, sp, target);
+        }
+    } else if (sp.type === 'dmg') {
+        const target = enemies.filter(e => e.alive).sort((a, b) => a.hp - b.hp)[0];
+        if (target) {
+            applySpellEffect(hero, spell, sp, target);
+        }
+    } else if (sp.type === 'debuff') {
+        const target = enemies.filter(e => e.alive).sort((a, b) => b.hp - a.hp)[0];
+        if (target) {
+            applySpellEffect(hero, spell, sp, target);
+        }
+    } else {
+        applySpellEffect(hero, spell, sp, target);
+    }
+  }
+
+  function applySpellEffect(hero, spellName, sp, target) {
+    if (sp.type === 'heal') {
+        const healAmount = rand(...sp.val);
+        target.hp = Math.min(target.maxHp, target.hp + healAmount);
+        logWrite(`${hero.name}は${spellName}を唱えた！${target.name}のHPが${healAmount}回復した！`);
+    } else if (sp.type === 'dmg') {
+        const dmg = rand(...sp.val) + (hero.int >> 2);
+        target.hp -= dmg;
+        logWrite(`${hero.name}は${spellName}を唱えた！${target.name}に${dmg}ダメージ！`);
+        if (target.hp <= 0) {
+            target.alive = false;
+            target.hp = 0;
+            logWrite(`${target.name}を倒した！`);
+        }
+    } else if (sp.type === 'debuff') {
+        target[sp.stat] = (target[sp.stat] || 0) + sp.val;
+        logWrite(`${hero.name}は${spellName}を唱えた！${target.name}の${sp.stat}が${Math.abs(sp.val)}下がった！`);
+    }
+  }
+
+  function enemyTurn() {
+    const aliveHeroes = heroes.filter(h => h.alive);
+    if (aliveHeroes.length === 0) {
+        logWrite('全滅…ゲームオーバー');
+        return;
+    }
+
+    enemies.filter(e => e.alive).forEach(e => {
+        const actionChance = Math.random();
+
+        if (e.mp === 0) {
+            // MPが0の場合は通常攻撃
+            const target = aliveHeroes[rand(0, aliveHeroes.length - 1)];
+            const dmg = rand(5, 15);
+            target.hp -= dmg;
+            if (target.hp <= 0) {
+                target.alive = false;
+                target.hp = 0;
+                logWrite(`${e.name}の攻撃！${target.name}は倒れた…`);
+            } else {
+                logWrite(`${e.name}の攻撃！${target.name}に${dmg}ダメージ！`);
+            }
+        } else if (actionChance < 0.1) {
+            // 10%の確率で何もしない
+            logWrite(`${e.name}は様子を見ている…`);
+        } else if (actionChance < 0.7) { // 通常攻撃の確率を60%から50%に減少
+            const target = aliveHeroes[rand(0, aliveHeroes.length - 1)];
+            const dmg = rand(5, 15);
+            target.hp -= dmg;
+            if (target.hp <= 0) {
+                target.alive = false;
+                target.hp = 0;
+                logWrite(`${e.name}の攻撃！${target.name}は倒れた…`);
+            } else {
+                logWrite(`${e.name}の攻撃！${target.name}に${dmg}ダメージ！`);
+            }
+        } else {
+            // 攻撃魔法の確率を30%から40%に増加
+            const dmgSpells = Object.entries(SPELLS).filter(([_, sp]) => sp.type === 'dmg' && e.mp >= sp.cost);
+            if (dmgSpells.length > 0) {
+                const [spellName, spell] = dmgSpells[rand(0, dmgSpells.length - 1)];
+                const target = aliveHeroes[rand(0, aliveHeroes.length - 1)];
+                e.mp -= spell.cost;
+                const dmg = rand(...spell.val);
+                target.hp -= dmg;
+                if (target.hp <= 0) {
+                    target.alive = false;
+                    target.hp = 0;
+                    logWrite(`${e.name}は${spellName}を唱えた！${target.name}は倒れた…`);
+                } else {
+                    logWrite(`${e.name}は${spellName}を唱えた！${target.name}に${dmg}ダメージ！`);
+                }
+            } else {
+                logWrite(`${e.name}はMPが足りないため、何もしなかった…`);
+            }
+        }
+    });
+
+    isEnemyTurn = false; // 敵のターンが終わったら味方のターンに移行
+    nextTurn();
+}
+
+  function showGameOverScreen() {
+    actions.innerHTML = `
+      <button onclick="location.reload()">リスタート</button>
+    `;
+    logWrite('<strong>全滅…ゲームオーバー</strong>');
+}
+
+
+  function visitInn() {
+    heroes = heroes.map(hero => {
+        if (hero.alive) { // 生存しているキャラクターのみ回復
+            return {
+                ...hero,
+                hp: hero.maxHp, // HPを最大値まで回復
+                mp: hero.maxMp, // MPを最大値まで回復
+                exp: 0 // 経験値をリセット
+            };
+        }
+        return hero; // 死亡しているキャラクターはそのまま
+    });
+    logWrite('宿屋で休んでHPとMPが全回復しました！（経験値がリセットされました）');
+    startBattle(); // 次の戦闘へ
+}
+
+  function visitTemple() {
+    actions.innerHTML = heroes.map((hero, index) => `
+      <div>
+        <strong>${hero.name}</strong> (${hero.job} Lv${hero.level})
+        <div>ジョブ履歴: ${Object.entries(hero.jobHistory || {}).map(([job, level]) => `${job}: Lv${level}`).join(', ') || 'なし'}</div>
+        <button onclick="changeJob(${index})">転職する</button>
+      </div>
+    `).join('');
+    logWrite('神殿で転職が可能です。');
+    const backButton = document.createElement('button');
+    backButton.textContent = '次の戦闘に進む';
+    backButton.onclick = showBattleOptions; // 次の戦闘選択肢を表示
+    actions.appendChild(backButton);
+}
+
+function changeJob(heroIndex) {
+    const hero = heroes[heroIndex];
+    const jobButtons = Object.keys(JOBS)
+        .filter(job => job !== hero.job) // 現在の職業を除外
+        .map(job => `
+            <button onclick="confirmChangeJob(${heroIndex}, '${job}')">${job}</button>
+        `).join('');
+    actions.innerHTML = `
+        <div>
+            <strong>${hero.name}の転職先を選んでください:</strong>
+            <div>${jobButtons}</div>
+        </div>
+    `;
+}
+function confirmChangeJob(heroIndex, newJob) {
+    const hero = heroes[heroIndex];
+    const oldJob = hero.job;
+
+    // 現在のジョブとレベルを履歴に保存
+    hero.jobHistory[oldJob] = hero.level;
+
+    // 転職処理
+    const oldStats = {
+        maxHp: hero.maxHp,
+        maxMp: hero.maxMp,
+        str: hero.str,
+        int: hero.int
+    };
+
+    const newStats = JOBS[newJob];
+    hero.job = newJob;
+    hero.level = 1;
+    hero.exp = 0;
+    hero.maxHp = Math.floor(newStats.hp + oldStats.maxHp * 0.4 + rand(-2, 2)); // 40%を引き継ぐ
+    hero.maxMp = Math.floor(newStats.mp + oldStats.maxMp * 0.4 + rand(-2, 2)); // 40%を引き継ぐ
+    hero.str = Math.floor(newStats.str + oldStats.str * 0.4 + rand(-1, 1)); // 40%を引き継ぐ
+    hero.int = Math.floor(newStats.int + oldStats.int * 0.4 + rand(-1, 1)); // 40%を引き継ぐ
+    hero.hp = hero.maxHp;
+    hero.mp = hero.maxMp;
+
+    logWrite(`${hero.name}は${newJob}に転職しました！`);
+    actions.innerHTML = ''; // 転職後の選択肢を消す
+    startBattle(); // 次の戦闘へ
+}
+
+function giveExp() {
+    let totalExp = enemies.reduce((sum, e) => sum + (e.alive ? 0 : e.exp), 0); // 倒した敵の経験値を合計
+    let sharedExp = Math.floor(totalExp / heroes.length); // パーティ全員で等分
+
+    heroes.forEach(hero => {
+        hero.exp += sharedExp; // 経験値を加算
+        logWrite(`${hero.name}は${sharedExp}の経験値を得た！（現在の経験値: ${hero.exp}）`);
+        while (hero.exp >= calculateExpForLevel(hero.level)) {
+            hero.exp -= calculateExpForLevel(hero.level); // 現在のレベルに必要な経験値を差し引く
+            hero.level++; // レベルアップ
+            const growth = JOB_GROWTH[hero.job];
+            hero.maxHp += rand(...growth.maxHp); // HP増加
+            hero.maxMp += rand(...growth.maxMp); // MP増加
+            hero.str += rand(...growth.str); // 力増加
+            hero.int += rand(...growth.int); // 賢さ増加
+            hero.hp = hero.maxHp; // HPを全回復
+            hero.mp = hero.maxMp; // MPを全回復
+
+            // ジョブ履歴を更新
+            hero.jobHistory[hero.job] = Math.max(hero.jobHistory[hero.job] || 0, hero.level);
+
+            logWrite(`${hero.name}はLv${hero.level}に上がった！`);
+        }
+    });
+
+    dropItems(enemies.length); // 敵の数に応じたアイテムをドロップ
+
+    // エネミーを味方にする処理を呼び出し
+    convertEnemyToAlly();
+
+    updateStats(); // ステータスを画面に反映
+    battleCount++; // 戦闘回数を増加
+
+    // 戦闘終了後の選択肢を表示
+    showInnOrTemple();
+    logWrite('戦闘が終了しました。次の行動を選択してください。');
+}
+
+function calculateExpForLevel(level) {
+    // レベルアップに必要な経験値を計算
+    return 50 + 25 * (level - 1); // 必要経験値を緩やかに増加させる
+}
+
+function dropItems(enemyCount) {
+    // 敵の数かける2のdrop
+    const dropCount = enemyCount === 1 ? 1 : enemyCount * 2;
+    for (let i = 0; i < dropCount; i++) {
+        const randomItem = ITEM_LIST[rand(0, ITEM_LIST.length - 1)];
+        inventory.push(randomItem); // インベントリに追加
+        logWrite(`アイテム「${randomItem.name}」を入手しました！`);
+    }
+}
+function useItem(hero, itemIndex) {
+    const item = inventory[itemIndex];
+    if (!item) return;
+
+    if (item.type === 'heal' || item.type === 'mp') {
+        if (item.range === 'single') {
+            // 対象を選択する画面を表示
+            showTargetSelection(hero, item, itemIndex);
+        } else if (item.range === 'all') {
+            const targets = item.type === 'heal' ? heroes.filter(h => h.alive) : heroes.filter(h => h.alive);
+            targets.forEach(target => {
+                const amount = rand(...item.val);
+                if (item.type === 'heal') {
+                    target.hp = Math.min(target.maxHp, target.hp + amount);
+                    logWrite(`${hero.name}は「${item.name}」を使った！${target.name}のHPが${amount}回復した！`);
+                } else if (item.type === 'mp') {
+                    target.mp = Math.min(target.maxMp, target.mp + amount);
+                    logWrite(`${hero.name}は「${item.name}」を使った！${target.name}のMPが${amount}回復した！`);
+                }
+            });
+            inventory.splice(itemIndex, 1); // アイテムを消費
+            showHeroActionSelection(); // 次の行動選択へ
+        }
+    }
+}
+
+function showItemSelection(hero) {
+    actions.innerHTML = `<strong>使用するアイテムを選択してください:</strong>`;
+    inventory.forEach((item, index) => {
+        const itemButton = document.createElement('button');
+        itemButton.textContent = item.name;
+        itemButton.onclick = () => {
+            useItem(hero, index);
+        };
+        actions.appendChild(itemButton);
+    });
+
+    const backButton = document.createElement('button');
+    backButton.textContent = '戻る';
+    backButton.onclick = () => {
+        showHeroActionSelection();
+    };
+    actions.appendChild(backButton);
+}
+
+function showTargetSelection(hero, item, itemIndex) {
+    actions.innerHTML = `<strong>対象を選択してください:</strong>`;
+    const targets = item.type === 'heal' ? heroes.filter(h => h.alive) : heroes.filter(h => h.alive);
+
+    targets.forEach(target => {
+        const targetButton = document.createElement('button');
+        targetButton.textContent = target.name;
+        targetButton.onclick = () => {
+            const amount = rand(...item.val);
+            if (item.type === 'heal') {
+                target.hp = Math.min(target.maxHp, target.hp + amount);
+                logWrite(`${hero.name}は「${item.name}」を使った！${target.name}のHPが${amount}回復した！`);
+            } else if (item.type === 'mp') {
+                target.mp = Math.min(target.maxMp, target.mp + amount);
+                logWrite(`${hero.name}は「${item.name}」を使った！${target.name}のMPが${amount}回復した！`);
+            }
+            inventory.splice(itemIndex, 1); // アイテムを消費
+            showHeroActionSelection(); // 次の行動選択へ
+        };
+        actions.appendChild(targetButton);
+    });
+
+    const backButton = document.createElement('button');
+    backButton.textContent = '戻る';
+    backButton.onclick = () => {
+        showHeroActionSelection();
+    };
+    actions.appendChild(backButton);
+}
+
+function showEnding() {
+    actions.innerHTML = `
+      <h2>エンディング</h2>
+      <p>勇者たちはすべての敵を倒し、世界に平和を取り戻しました。</p>
+      <button onclick="location.reload()">もう一度プレイする</button>
+    `;
+    logWrite('<strong>ゲームクリア！おめでとうございます！</strong>');
+}
+
+function visitTrainingGround() {
+    actions.innerHTML = heroes.map((hero, index) => `
+      <div>
+        <strong>${hero.name}</strong> (${hero.job} Lv${hero.level})
+        <div>ジョブ履歴: ${Object.entries(hero.jobHistory || {}).map(([job, level]) => `${job}: Lv${level}`).join(', ') || 'なし'}</div>
+        <button onclick="showSkillOptions(${index})">スキルを習得する</button>
+      </div>
+    `).join('');
+    logWrite('修行場でスキルを習得できます。');
+    const backButton = document.createElement('button');
+    backButton.textContent = '次の戦闘に進む';
+    backButton.onclick = showBattleOptions; // 次の戦闘選択肢を表示
+    actions.appendChild(backButton);
+}
+
+function showSkillOptions(heroIndex) {
+    const hero = heroes[heroIndex];
+    const availableSkills = Object.entries(ULT_SPELLS).filter(([spell, details]) => {
+        // 条件: requiredJobsと現在のジョブ履歴を比較
+        const requiredJobs = details.requiredJobs;
+        return Object.keys(requiredJobs).every(job => {
+            // ジョブ履歴が未定義の場合は0とみなす
+            return (hero.jobHistory[job] || 0) >= requiredJobs[job];
+        });
+    });
+
+    if (availableSkills.length === 0) {
+        logWrite(`${hero.name}は習得可能なスキルがありません。`);
+        return;
+    }
+
+    actions.innerHTML = availableSkills.map(([spell, details]) => `
+      <div>
+        <strong>${details.name}</strong> (${details.type === 'dmg' ? '攻撃' : '回復'}) - MP: ${details.cost}
+        <button onclick="learnSkill(${heroIndex}, '${spell}')">習得する</button>
+      </div>
+    `).join('');
+}
+
+function learnSkill(heroIndex, spell) {
+    const hero = heroes[heroIndex];
+    hero.learnedSpells = hero.learnedSpells || [];
+    hero.learnedSpells.push(spell);
+
+    logWrite(`${hero.name}は「${spell}」を習得しました！`);
+    startBattle(); // スキル習得後に次の戦闘を開始
+}
+
+function showInnOrTemple() {
+    actions.innerHTML = `
+      <button onclick="visitInn()">宿屋に行く</button>
+      <button onclick="visitTemple()">神殿に行く</button>
+      <button onclick="visitTrainingGround()">修行場に行く</button>
+      <button onclick="showBattleOptions()">次の戦闘に行く</button>
+    `;
+    logWrite('宿屋、神殿、修行場のいずれかを選んでください。または次の戦闘に進むこともできます。');
+}
+function convertEnemyToAlly() {
+    if (heroes.length >= 3) {
+        logWrite('味方の人数が最大です。これ以上仲間にできません。');
+        return;
+    }
+
+    const defeatedEnemies = enemies.filter(e => !e.alive);
+    if (defeatedEnemies.length > 0 && Math.random() * 100 < ENEMY_FRIENDLY_PER) {
+        const newAlly = defeatedEnemies[rand(0, defeatedEnemies.length - 1)];
+
+        // 選択画面を表示
+        actions.innerHTML = `
+            <div>
+                <strong>${newAlly.name}が味方になりたそうにこちらを見ている…</strong>
+                <button onclick="addAlly('${newAlly.name}')">仲間にする</button>
+                <button onclick="rejectAlly('${newAlly.name}')">断る</button>
+            </div>
+        `;
+    }
+}
+
+function addAlly(enemyName) {
+    const defeatedEnemy = enemies.find(e => e.name === enemyName);
+    if (!defeatedEnemy) return;
+
+    const hero = createHero(defeatedEnemy.name, '戦士'); // 戦士として味方に追加
+    hero.hp = hero.maxHp; // HPを全回復
+    hero.mp = hero.maxMp; // MPを全回復
+    hero.learnedSpells = []; // スペルは未習得
+    heroes.push(hero);
+
+    logWrite(`${defeatedEnemy.name}が味方になりました！`);
+    actions.innerHTML = ''; // 選択画面を消す
+    showInnOrTemple(); // 次の行動選択画面を表示
+}
+
+function rejectAlly(enemyName) {
+    logWrite(`${enemyName}を仲間にするのを断りました。`);
+    actions.innerHTML = ''; // 選択画面を消す
+    showInnOrTemple(); // 次の行動選択画面を表示
+}
+
+  startBattle();
+</script>
+</body>
+</html>
