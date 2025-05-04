@@ -1,4 +1,3 @@
-2028
 <!DOCTYPE html>
 <html lang="ja">
 <script>
@@ -181,9 +180,16 @@ let ITEM_LIST = [
 
 ];
 
+ // 所持アイテムリスト
 let inventory = [
-    { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 } // 初期アイテム
-]; // 所持アイテムリスト
+    { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 },
+    // applyBattleBuff(heroes[0], 'str', 'add', 10);
+    { name: '力の種', type: 'buff', range: 'single', buff: 'str', val: [10, 20], cost: 0, apply_type: 'add'},
+    { name: 'すごい力の種', type: 'buff', range: 'single', buff: 'str', val: [20, 30], cost: 0, apply_type: 'multiply'},
+
+
+
+];
 
 
 const SPELLS = {
@@ -237,9 +243,10 @@ function createHero(name, job) {
         maxMp: b.mp,
         mp: b.mp,
         alive: true,
-        jobHistory: { [job]: 1 }, // 初期ジョブを履歴に追加
+        jobHistory: { [job]: 1 },
+        buffs: { hp: 0, mp: 0, str: 0 }, // 戦闘中の補正値
         get str() {
-            return Math.floor(this.maxHp * STR_PERCENTAGE);
+            return Math.floor(this.maxHp * STR_PERCENTAGE) + this.buffs.str;
         },
     };
 }
@@ -357,6 +364,7 @@ function rand(min, max) {
                 ${hero.name} (${hero.job} Lv${hero.level}) 
                 HP: ${hero.hp}/${hero.maxHp} 
                 MP: ${hero.mp}/${hero.maxMp} 
+                BUFF: ${JSON.stringify(hero.buffs.str)}
                 EXP: ${hero.exp} 
                 (次のLvまで: ${nextLevelExp > 0 ? nextLevelExp : 0})
             </div>
@@ -365,16 +373,14 @@ function rand(min, max) {
 }
 
   function updateEnemies(){ enemiesDiv.innerHTML=enemies.map(e=>`<div class="enemy ${!e.alive?'dead':''}" data-id="${e.id}">${e.name} HP:${e.hp}/${e.maxHp}</div>`).join(''); }
+
 function spawnEnemies(count = 3) {
     enemies = [];
-    const maxEnemyLevel = Math.max(...ENEMY_LIST.map(e => e.level)); // 最大レベルの取得
-    const minLevel = Math.min(Math.floor((battleCount - 1) / 2) + 1, maxEnemyLevel); // 最低レベル
-    const maxLevel = Math.min(minLevel + 1, maxEnemyLevel); // 最大レベル
+    const maxEnemyLevel = Math.max(...ENEMY_LIST.map(e => e.level));
+    const minLevel = Math.min(Math.floor((battleCount - 1) / 2) + 1, maxEnemyLevel);
+    const maxLevel = Math.min(minLevel + 1, maxEnemyLevel);
 
-    // 指定されたレベル範囲内のモンスターをランダムに選択
     let candidates = ENEMY_LIST.filter(e => e.level >= minLevel && e.level <= maxLevel);
-
-    // 候補がない場合は最大レベルの敵を選択
     if (candidates.length === 0) {
         candidates = ENEMY_LIST.filter(e => e.level === maxEnemyLevel);
     }
@@ -384,11 +390,10 @@ function spawnEnemies(count = 3) {
         e.maxHp = e.hp;
         e.alive = true;
         e.id = i;
+        e.buffs = { hp: 0, mp: 0, str: 0 }; // 戦闘中の補正値
         enemies.push(e);
     }
 }
-
-
 function startBattle(enemyCount = 2) {
     clearLog();
 
@@ -469,7 +474,7 @@ function allHeroesAttack() {
     executeHeroActions(); // 全員の攻撃を即時実行
 }
 
-  function nextTurn() {
+function nextTurn() {
     updateStats();
     updateEnemies();
     actions.innerHTML = '';
@@ -529,7 +534,10 @@ function executeHeroActions() {
     while (actionsQueue.length > 0) {
         const { hero, action, spell, target } = actionsQueue.shift();
         if (action === 'attack') {
-            const dmg = rand(hero.str, hero.str + 6); // strを基にダメージ計算
+            // strにbuffを加味したダメージ計算
+            const baseStr = Math.floor(hero.maxHp * STR_PERCENTAGE);
+            const totalStr = baseStr + hero.buffs.str; // buffs.strを加算
+            const dmg = rand(totalStr, totalStr + 6); // strを基にダメージ計算
             target.hp -= dmg;
             logWrite(`${hero.name}の攻撃！${target.name}に${dmg}ダメージ！`);
             if (target.hp <= 0) {
@@ -711,6 +719,7 @@ function confirmChangeJob(heroIndex, newJob) {
 }
 
 function giveExp() {
+    resetBuffs();
     clearLog();
     logWrite('敵を全滅させた！経験値を獲得！');
 
@@ -757,6 +766,23 @@ function dropItems(enemyCount) {
 function useItem(hero, itemIndex) {
     const item = inventory[itemIndex];
     if (!item) return;
+
+    //     { name: '力の種', type: 'buff', effect: {range: 'single', buff: {str: 10}}, cost: 0 },
+    // のようなbuffアイテムを実装する場合
+    if (item.type === 'buff') {
+        // 利用したキャラクタにbuffを付与
+        const target = hero;
+        if (target) {
+            // const buffValue = item.effect.buff[buffKey]; // buffの値を取得
+            // applyBattleBuff(target, buffKey, buffValue);
+            // function applyBattleBuff(hero, stat, apply_type='add', value) {
+            applyBattleBuff(target, item.buff, item.apply_type, item.val[0]);
+
+            logWrite(`${hero.name}は「${item.name}」を使った！${target.name}の${item.buff}が${item.val[0]}上昇した！`);
+            inventory.splice(itemIndex, 1); // アイテムを消費
+            showHeroActionSelection(); // 次の行動選択へ
+        }
+    }
 
     if (item.type === 'heal' || item.type === 'mp') {
         if (item.range === 'single') {
@@ -969,6 +995,33 @@ function changeJob(heroIndex) {
     actions.appendChild(backButton);
 }
 
+function applyBattleBuff(hero, stat, apply_type='add', value) {
+    if (hero.buffs[stat] !== undefined) {
+        // hero.buffs[stat] += value;
+        // apply_typeに応じて加算または減算または、元の数値を乗算した値を加算
+        if (apply_type === 'add') {
+            hero.buffs[stat] += value;
+            logWrite(`${hero.name}の${stat}が${value > 0 ? '+' : ''}${value}されました！`);
+        // } else if (apply_type === 'subtract') {
+        //     hero.buffs[stat] -= value;
+        } else if (apply_type === 'multiply') {
+            hero.buffs[stat] += Math.floor(hero[stat] + hero.buffs[stat]) * value;
+            logWrite(`${hero.name}の${hero[stat]}が${Math.floor(hero[stat] + hero.buffs[stat]) * value}${value}されました！`);
+        }
+
+
+
+    }
+}
+
+function resetBuffs() {
+    heroes.forEach(hero => {
+        hero.buffs = { hp: 0, mp: 0, str: 0 };
+    });
+    enemies.forEach(enemy => {
+        enemy.buffs = { hp: 0, mp: 0, str: 0 };
+    });
+}
 
   startBattle();
 </script>
