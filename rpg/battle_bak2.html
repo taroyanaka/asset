@@ -243,137 +243,6 @@ const ULT_SPELLS = {
 };
 
 
-// アクセサリのデータ構造
-const ACCESSORY_LIST = [
-    { name: '力の指輪', buff: 'str', value: 10, apply_type: 'add' },
-    { name: '守りのペンダント', buff: 'hp', value: 20, apply_type: 'add' },
-    { name: '魔力のイヤリング', buff: 'mp', value: 15, apply_type: 'add' },
-    { name: '攻撃の腕輪', buff: 'str', value: 0.2, apply_type: 'multiply' },
-    { name: '生命の指輪', buff: 'hp', value: 0.1, apply_type: 'multiply' },
-];
-
-// アクセサリのドロップ確率（1体あたりのドロップ確率をパーセンテージで設定）
-const ACCESSORY_DROP_RATE = 90; // 90%の確率で1体あたりドロップ
-
-// 1キャラ当たりの最大装備数
-const MAX_ACCESSORIES_PER_HERO = 1; // 1キャラ当たりの最大装備数
-
-// 戦闘終了時にアクセサリをドロップ
-function dropAccessories(enemyCount) {
-    const totalDropChance = enemyCount * (ACCESSORY_DROP_RATE / 100); // 敵の数に応じた期待値
-    const dropCount = Math.floor(totalDropChance); // 確定ドロップ数
-    const additionalDrop = Math.random() < (totalDropChance - dropCount) ? 1 : 0; // 端数分の確率で追加ドロップ
-    const totalDrops = dropCount + additionalDrop;
-
-    const droppedAccessories = [];
-    for (let i = 0; i < totalDrops; i++) {
-        const randomAccessory = ACCESSORY_LIST[rand(0, ACCESSORY_LIST.length - 1)];
-        droppedAccessories.push(randomAccessory);
-    }
-    return droppedAccessories;
-}
-// アクセサリを装備する関数
-function equipAccessory(hero, accessory) {
-    if (!hero.accessories) {
-        hero.accessories = [];
-    }
-    if (hero.accessories.length >= MAX_ACCESSORIES_PER_HERO) {
-        logWrite(`${hero.name}はこれ以上アクセサリを装備できません。`);
-        return;
-    }
-    hero.accessories.push(accessory);
-    logWrite(`${hero.name}は「${accessory.name}」を装備しました！`);
-}
-
-// 戦闘終了時にアクセサリを選択して装備
-function showAccessorySelection(droppedAccessories) {
-    actions.innerHTML = `<strong>ドロップしたアクセサリを装備してください:</strong>`;
-    droppedAccessories.forEach((accessory, index) => {
-        heroes.forEach((hero, heroIndex) => {
-            const accessoryButton = document.createElement('button');
-            accessoryButton.textContent = `${hero.name}に「${accessory.name}」を装備`;
-            accessoryButton.onclick = () => {
-                equipAccessory(hero, accessory);
-                droppedAccessories.splice(index, 1); // ドロップリストから削除
-                if (droppedAccessories.length === 0) {
-                    logWrite('全てのアクセサリを装備しました。');
-                    showInnOrTemple(); // 次の選択肢へ
-                } else {
-                    showAccessorySelection(droppedAccessories); // 再描画
-                }
-            };
-            actions.appendChild(accessoryButton);
-        });
-    });
-
-    const skipButton = document.createElement('button');
-    skipButton.textContent = '装備せず破棄';
-    skipButton.onclick = () => {
-        logWrite('装備しなかったアクセサリは破棄されました。');
-        showInnOrTemple(); // 次の選択肢へ
-    };
-    actions.appendChild(skipButton);
-}
-
-// 戦闘開始時にアクセサリの効果を適用
-function applyAccessoryEffects(hero) {
-    if (hero.accessories) {
-        hero.accessories.forEach(accessory => {
-            applyBattleBuff(hero, accessory.buff, accessory.apply_type, accessory.value);
-        });
-    }
-}
-
-// 戦闘開始時に全キャラクターのアクセサリ効果を適用
-function startBattle(enemyCount = 2) {
-    clearLog();
-
-    spawnEnemies(enemyCount);
-    logWrite(`敵が${enemies.length}体あらわれた！（戦闘回数: ${battleCount}）`);
-    updateEnemies();
-
-    // アクセサリ効果を適用
-    heroes.forEach(hero => applyAccessoryEffects(hero));
-
-    isEnemyTurn = false; // プレイヤーのターンから開始
-    nextTurn();
-}
-
-// 戦闘終了後の処理にアクセサリドロップと装備選択を追加
-function giveExp() {
-    resetBuffs();
-    clearLog();
-    logWrite('敵を全滅させた！経験値を獲得！');
-
-    let totalExp = enemies.reduce((sum, e) => sum + (e.alive ? 0 : e.exp), 0); // 倒した敵の経験値を合計
-    let sharedExp = Math.floor(totalExp / heroes.length); // パーティ全員で等分
-
-    heroes.forEach(hero => {
-        hero.exp += sharedExp; // 経験値を加算
-        logWrite(`${hero.name}は${sharedExp}の経験値を得た！（現在の経験値: ${hero.exp}）`);
-        while (hero.exp >= calculateExpForLevel(hero.level)) {
-            hero.exp -= calculateExpForLevel(hero.level); // 現在のレベルに必要な経験値を差し引く
-            hero.level++; // レベルアップ
-            const growth = JOB_GROWTH[hero.job];
-            hero.maxHp += rand(...growth.maxHp); // HP増加
-            hero.maxMp += rand(...growth.maxMp); // MP増加
-            hero.hp = hero.maxHp; // HPを全回復
-            hero.mp = hero.maxMp; // MPを全回復
-
-            // ジョブ履歴を更新
-            hero.jobHistory[hero.job] = Math.max(hero.jobHistory[hero.job] || 0, hero.level);
-
-            logWrite(`${hero.name}はLv${hero.level}に上がった！`);
-        }
-    });
-
-    const droppedAccessories = dropAccessories(enemies.length); // アクセサリをドロップ
-    if (droppedAccessories.length > 0) {
-        showAccessorySelection(droppedAccessories); // アクセサリ装備選択画面を表示
-    } else {
-        showInnOrTemple(); // 次の選択肢へ
-    }
-}
 function createHero(name, job) {
     const b = JOBS[job];
     return {
@@ -543,10 +412,6 @@ function startBattle(enemyCount = 2) {
     spawnEnemies(enemyCount);
     logWrite(`敵が${enemies.length}体あらわれた！（戦闘回数: ${battleCount}）`);
     updateEnemies();
-
-    // アクセサリ効果を適用
-    heroes.forEach(hero => applyAccessoryEffects(hero));
-
     isEnemyTurn = false; // プレイヤーのターンから開始
     nextTurn();
 }
@@ -892,12 +757,8 @@ function giveExp() {
         }
     });
 
-    const droppedAccessories = dropAccessories(enemies.length); // アクセサリをドロップ
-    if (droppedAccessories.length > 0) {
-        showAccessorySelection(droppedAccessories); // アクセサリ装備選択画面を表示
-    } else {
-        showInnOrTemple(); // 次の選択肢へ
-    }
+    dropItems(enemies.length); // 敵の数に応じたアイテムをドロップ
+    convertEnemyToAlly();
 }
 
 function calculateExpForLevel(level) {
