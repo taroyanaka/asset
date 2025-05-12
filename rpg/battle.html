@@ -496,7 +496,7 @@ function spawnEnemies(count = 3) {
     const minLevel = Math.min(Math.floor((battleCount - 1) / 2) + 1, maxEnemyLevel);
     const maxLevel = Math.min(minLevel + 1, maxEnemyLevel);
 
-    let candidates = ENEMY_LIST.filter(e => e.level >= minLevel && e.level <= maxLevel);
+    let candidates = ENEMY_LIST.filter(e => e.level >= minLevel && e.level <= maxLevel); // 敵のレベルを調整
     if (candidates.length === 0) {
         candidates = ENEMY_LIST.filter(e => e.level === maxEnemyLevel);
     }
@@ -782,11 +782,7 @@ function confirmChangeJob(heroIndex, newJob) {
     const hero = heroes[heroIndex];
     const oldJob = hero.job;
     hero.jobHistory[oldJob] = hero.level; // 現在のジョブとレベルを履歴に保存
-    const oldStats = { // 転職処理
-        maxHp: hero.maxHp,
-        maxMp: hero.maxMp,
-    };
-
+    const oldStats = { maxHp: hero.maxHp, maxMp: hero.maxMp, }; // 転職処理
     const newStats = JOBS[newJob];
     hero.job = newJob;
     hero.level = 1;
