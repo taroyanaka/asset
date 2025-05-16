@@ -62,6 +62,8 @@ let test = true; // テストモードのフラグ
   </style>
 </head>
 <body>
+    1.1
+
   <div class="left-column">
     <div class="log" id="log"></div>
   </div>
@@ -305,50 +307,24 @@ function showAccessorySelection(droppedAccessories) {
     actions.appendChild(skipButton);
 }
 
-// 戦闘開始時にアクセサリの効果を適用
-function applyAccessoryEffects(hero) {
-    if (hero.accessories) {
-        hero.accessories.forEach(accessory => {
-            applyBattleBuff(hero, accessory.buff, accessory.apply_type, accessory.value);
-        });
-    }
-}
-
 // 戦闘開始時に全キャラクターのアクセサリ効果を適用
 function startBattle(enemyCount = 2) {
+    const clearLog = () => log.innerHTML = ''; // ログをクリアする関数
     clearLog();
     spawnEnemies(enemyCount);
     logWrite(`敵が${enemies.length}体あらわれた！（戦闘回数: ${battleCount}）`);
     updateEnemies();
+    // 戦闘開始時にアクセサリの効果を適用
+    function applyAccessoryEffects(hero) {
+        if (hero.accessories) {
+            hero.accessories.forEach(accessory => {
+                applyBattleBuff(hero, accessory.buff, accessory.apply_type, accessory.value);
+            });
+        }
+    }
     heroes.forEach(hero => applyAccessoryEffects(hero)); // アクセサリ効果を適用
     isEnemyTurn = false; // プレイヤーのターンから開始
     nextTurn();
-}
-
-function giveExp() {
-    resetBuffs();
-    clearLog();
-    logWrite('敵を全滅させた！経験値を獲得！');
-    let totalExp = enemies.reduce((sum, e) => sum + (e.alive ? 0 : e.exp), 0); // 倒した敵の経験値を合計
-    let sharedExp = Math.floor(totalExp / heroes.length); // パーティ全員で等分
-    heroes.forEach(hero => {
-        hero.exp += sharedExp; // 経験値を加算
-        logWrite(`${hero.name}は${sharedExp}の経験値を得た！（現在の経験値: ${hero.exp}）`);
-        while (hero.exp >= calculateExpForLevel(hero.level)) {
-            hero.exp -= calculateExpForLevel(hero.level); // 現在のレベルに必要な経験値を差し引く
-            hero.level++; // レベルアップ
-            const growth = JOB_GROWTH[hero.job];
-            hero.maxHp += rand(...growth.maxHp); // HP増加
-            hero.maxMp += rand(...growth.maxMp); // MP増加
-            hero.hp = hero.maxHp; // HPを全回復
-            hero.mp = hero.maxMp; // MPを全回復
-            // ジョブ履歴を更新
-            hero.jobHistory[hero.job] = Math.max(hero.jobHistory[hero.job] || 0, hero.level);
-            logWrite(`${hero.name}はLv${hero.level}に上がった！`);
-        }
-    });
-    const droppedAccessories = dropAccessories(enemies.length); // アクセサリをドロップ
-    droppedAccessories.length > 0 ? showAccessorySelection(droppedAccessories) : showInnOrTemple(); // 次の選択肢へ
 }
 
 function createHero(name, job) {
@@ -369,10 +345,6 @@ function createHero(name, job) {
             return Math.floor(this.maxHp * STR_PERCENTAGE) + this.buffs.str;
         },
     };
-}
-
-function clearLog() {
-    log.innerHTML = '';
 }
 
 function logWrite(msg) {
@@ -461,6 +433,20 @@ function showHeroActionSelection() {
     if (inventory.length > 0) {
         const itemButton = document.createElement('button');
         itemButton.textContent = 'アイテム';
+        function showItemSelection(hero) {
+            actions.innerHTML = `<strong>使用するアイテムを選択してください:</strong>`;
+            inventory.forEach((item, index) => {
+                const itemButton = document.createElement('button');
+                itemButton.textContent = item.name;
+                itemButton.onclick = () => useItem(hero, index);
+                actions.appendChild(itemButton);
+            });
+
+            const backButton = document.createElement('button');
+            backButton.textContent = '戻る';
+            backButton.onclick = () => showHeroActionSelection();
+            actions.appendChild(backButton);
+        }
         itemButton.onclick = () => {showItemSelection(hero)};
         actions.appendChild(itemButton);
     }
@@ -507,16 +493,6 @@ function spawnEnemies(count = 3) {
     }
 }
 
-function startBattle(enemyCount = 2) {
-    clearLog();
-    spawnEnemies(enemyCount);
-    logWrite(`敵が${enemies.length}体あらわれた！（戦闘回数: ${battleCount}）`);
-    updateEnemies();
-    heroes.forEach(hero => applyAccessoryEffects(hero));
-    isEnemyTurn = false; // プレイヤーのターンから開始
-    nextTurn();
-}
-
 function showBattleOptions() {
     actions.innerHTML = `
         <strong>次の戦闘を選択してください:</strong>
@@ -541,6 +517,41 @@ function visitInn() {
 }
 
 function visitTemple() {
+    function changeJob(heroIndex) {
+        const hero = heroes[heroIndex];
+        const availableJobs = Object.keys(JOBS).filter(job => job !== hero.job);
+        actions.innerHTML = `<strong>${hero.name}の転職先を選んでください:</strong>`;
+        availableJobs.forEach(job => {
+            const jobButton = document.createElement('button');
+            jobButton.textContent = job;
+            jobButton.onclick = () => {
+                function confirmChangeJob(heroIndex, newJob) {
+                    const hero = heroes[heroIndex];
+                    const oldJob = hero.job;
+                    hero.jobHistory[oldJob] = hero.level; // 現在のジョブとレベルを履歴に保存
+                    const oldStats = { maxHp: hero.maxHp, maxMp: hero.maxMp, }; // 転職処理
+                    const newStats = JOBS[newJob];
+                    hero.job = newJob;
+                    hero.level = 1;
+                    hero.exp = 0;
+                    hero.maxHp = Math.floor(newStats.hp + oldStats.maxHp * STATUS_INHERITANCE_RATIO + rand(-2, 2));
+                    hero.maxMp = Math.floor(newStats.mp + oldStats.maxMp * STATUS_INHERITANCE_RATIO + rand(-2, 2));
+                    hero.hp = hero.maxHp;
+                    hero.mp = hero.maxMp;
+
+                    logWrite(`${hero.name}は${newJob}に転職しました！`);
+                    actions.innerHTML = ''; // 転職後の選択肢を消す
+                    showBattleOptions(); // 次の戦闘選択肢を表示
+                }
+                confirmChangeJob(heroIndex, job); // 転職を確定
+            };
+            actions.appendChild(jobButton);
+        });
+        const backButton = document.createElement('button');
+        backButton.textContent = '戻る';
+        backButton.onclick = visitTemple;
+        actions.appendChild(backButton);
+    }
     actions.innerHTML = heroes.map((hero, index) => `
       <div>
         <strong>${hero.name}</strong> (${hero.job} Lv${hero.level})
@@ -774,29 +785,15 @@ function visitInn() {
     startBattle(); // 次の戦闘へ
 }
 
-function confirmChangeJob(heroIndex, newJob) {
-    const hero = heroes[heroIndex];
-    const oldJob = hero.job;
-    hero.jobHistory[oldJob] = hero.level; // 現在のジョブとレベルを履歴に保存
-    const oldStats = { maxHp: hero.maxHp, maxMp: hero.maxMp, }; // 転職処理
-    const newStats = JOBS[newJob];
-    hero.job = newJob;
-    hero.level = 1;
-    hero.exp = 0;
-    hero.maxHp = Math.floor(newStats.hp + oldStats.maxHp * STATUS_INHERITANCE_RATIO + rand(-2, 2));
-    hero.maxMp = Math.floor(newStats.mp + oldStats.maxMp * STATUS_INHERITANCE_RATIO + rand(-2, 2));
-    hero.hp = hero.maxHp;
-    hero.mp = hero.maxMp;
-
-    logWrite(`${hero.name}は${newJob}に転職しました！`);
-    actions.innerHTML = ''; // 転職後の選択肢を消す
-    showBattleOptions(); // 次の戦闘選択肢を表示
-}
-
 const calculateExpForLevel = (level) => Math.floor(50 * Math.pow(1.5, level - 1)); // レベルアップに必要な経験値を計算
 
 function giveExp() {
+    function resetBuffs() {
+        heroes.forEach(hero => {hero.buffs = { hp: 0, mp: 0, str: 0 }});
+        enemies.forEach(enemy => {enemy.buffs = { hp: 0, mp: 0, str: 0 }});
+    }
     resetBuffs();
+    const clearLog = () => log.innerHTML = ''; // ログをクリアする関数
     clearLog();
     logWrite('敵を全滅させた！経験値を獲得！');
     let totalExp = enemies.reduce((sum, e) => sum + (e.alive ? 0 : e.exp), 0); // 倒した敵の経験値を合計
@@ -857,21 +854,6 @@ function useItem(hero, itemIndex) {
     }
 }
 
-function showItemSelection(hero) {
-    actions.innerHTML = `<strong>使用するアイテムを選択してください:</strong>`;
-    inventory.forEach((item, index) => {
-        const itemButton = document.createElement('button');
-        itemButton.textContent = item.name;
-        itemButton.onclick = () => useItem(hero, index);
-        actions.appendChild(itemButton);
-    });
-
-    const backButton = document.createElement('button');
-    backButton.textContent = '戻る';
-    backButton.onclick = () => showHeroActionSelection();
-    actions.appendChild(backButton);
-}
-
 function showTargetSelection(hero, item, itemIndex) {
     actions.innerHTML = `<strong>対象を選択してください:</strong>`;
     const targets = item.type === 'heal' ? heroes.filter(h => h.alive) : heroes.filter(h => h.alive);
@@ -910,6 +892,31 @@ function showEnding() {
 }
 
 function visitTrainingGround() {
+    function showSkillOptions(heroIndex) {
+        const hero = heroes[heroIndex]; // 1行関数で条件判定を分離
+        const hasJobLevel = (job, lv) => (hero.jobHistory[job] || 0) >= lv;
+        const canLearnSkill = ([, details]) =>
+            Object.entries(details.requiredJobs).every(([job, lv]) => hasJobLevel(job, lv)); // スキル習得条件を満たすか判定
+        const isSkillLearned = (spell) => hero.learnedSpells && hero.learnedSpells.includes(spell); // 既に習得済みか判定
+        const availableSkills = Object.entries(ULT_SPELLS).filter(([spell, details]) => canLearnSkill([spell, details]) && !isSkillLearned(spell)); // 習得可能なスキルをフィルタリング
+        if (availableSkills.length === 0) {logWrite(`${hero.name}は習得可能なスキルがありません。`); return; } // 習得可能なスキルがない場合はメッセージを表示
+
+        function learnSkill(heroIndex, spell) {
+            const hero = heroes[heroIndex];
+            hero.learnedSpells = hero.learnedSpells || [];
+            hero.learnedSpells.push(spell);
+            logWrite(`${hero.name}は「${spell}」を習得しました！`);
+            showBattleOptions();    // 戦闘選択肢に戻る    
+        }
+        
+        actions.innerHTML = availableSkills.map(([spell, details]) => `
+        <div>
+            <strong>${details.name}</strong> (${details.type === 'dmg' ? '攻撃' : '回復'}) - MP: ${details.cost}
+            <button onclick="learnSkill(${heroIndex}, '${spell}')">習得する</button>
+        </div>
+        `).join('');
+    }
+
     actions.innerHTML = heroes.map((hero, index) => `
       <div>
         <strong>${hero.name}</strong> (${hero.job} Lv${hero.level})
@@ -917,37 +924,12 @@ function visitTrainingGround() {
         <button onclick="showSkillOptions(${index})">スキルを習得する</button>
       </div>
     `).join('');
+
     logWrite('修行場でスキルを習得できます。');
     const backButton = document.createElement('button');
     backButton.textContent = '次の戦闘に進む';
     backButton.onclick = showBattleOptions; // 次の戦闘選択肢を表示
     actions.appendChild(backButton);
-}
-
-function showSkillOptions(heroIndex) {
-    const hero = heroes[heroIndex]; // 1行関数で条件判定を分離
-    const hasJobLevel = (job, lv) => (hero.jobHistory[job] || 0) >= lv;
-    const canLearnSkill = ([, details]) =>
-        Object.entries(details.requiredJobs).every(([job, lv]) => hasJobLevel(job, lv)); // スキル習得条件を満たすか判定
-    const isSkillLearned = (spell) => hero.learnedSpells && hero.learnedSpells.includes(spell); // 既に習得済みか判定
-    const availableSkills = Object.entries(ULT_SPELLS).filter(([spell, details]) => canLearnSkill([spell, details]) && !isSkillLearned(spell)); // 習得可能なスキルをフィルタリング
-
-    if (availableSkills.length === 0) {logWrite(`${hero.name}は習得可能なスキルがありません。`); return; } // 習得可能なスキルがない場合はメッセージを表示
-
-    actions.innerHTML = availableSkills.map(([spell, details]) => `
-      <div>
-        <strong>${details.name}</strong> (${details.type === 'dmg' ? '攻撃' : '回復'}) - MP: ${details.cost}
-        <button onclick="learnSkill(${heroIndex}, '${spell}')">習得する</button>
-      </div>
-    `).join('');
-}
-
-function learnSkill(heroIndex, spell) {
-    const hero = heroes[heroIndex];
-    hero.learnedSpells = hero.learnedSpells || [];
-    hero.learnedSpells.push(spell);
-    logWrite(`${hero.name}は「${spell}」を習得しました！`);
-    showBattleOptions();    // 戦闘選択肢に戻る    
 }
 
 function showInnOrTemple() {
@@ -970,6 +952,23 @@ function convertEnemyToAlly() {
     const is_be_friend = () => Math.random() * 100 < ENEMY_FRIENDLY_PER; // 敵が仲間になりたがっている確率
     if (is_be_friend()) {
         const newAlly = defeatedEnemies[rand(0, defeatedEnemies.length - 1)];
+        function addAlly(enemyName) {
+            const defeatedEnemy = enemies.find(e => e.name === enemyName);
+            if (!defeatedEnemy) return;
+            const hero = createHero(defeatedEnemy.name, '戦士'); // 戦士として味方に追加
+            hero.hp = hero.maxHp; // HPを全回復
+            hero.mp = hero.maxMp; // MPを全回復
+            hero.learnedSpells = []; // スペルは未習得
+            heroes.push(hero);
+            logWrite(`${defeatedEnemy.name}が味方になりました！`);
+            actions.innerHTML = ''; // 選択画面を消す
+            showInnOrTemple(); // 次の行動選択画面を表示
+        }
+        function rejectAlly(enemyName) {
+            logWrite(`${enemyName}を仲間にするのを断りました。`);
+            actions.innerHTML = ''; // 選択画面を消す
+            showInnOrTemple(); // 次の行動選択画面を表示
+        }
         actions.innerHTML = `
             <div>
                 <strong>${newAlly.name}が味方になりたそうにこちらを見ている…</strong>
@@ -980,43 +979,6 @@ function convertEnemyToAlly() {
     }else{
         showInnOrTemple(); // 仲間にできない場合は宿屋や神殿の選択肢を表示
     }
-}
-
-function addAlly(enemyName) {
-    const defeatedEnemy = enemies.find(e => e.name === enemyName);
-    if (!defeatedEnemy) return;
-    const hero = createHero(defeatedEnemy.name, '戦士'); // 戦士として味方に追加
-    hero.hp = hero.maxHp; // HPを全回復
-    hero.mp = hero.maxMp; // MPを全回復
-    hero.learnedSpells = []; // スペルは未習得
-    heroes.push(hero);
-    logWrite(`${defeatedEnemy.name}が味方になりました！`);
-    actions.innerHTML = ''; // 選択画面を消す
-    showInnOrTemple(); // 次の行動選択画面を表示
-}
-
-function rejectAlly(enemyName) {
-    logWrite(`${enemyName}を仲間にするのを断りました。`);
-    actions.innerHTML = ''; // 選択画面を消す
-    showInnOrTemple(); // 次の行動選択画面を表示
-}
-
-function changeJob(heroIndex) {
-    const hero = heroes[heroIndex];
-    const availableJobs = Object.keys(JOBS).filter(job => job !== hero.job);
-    actions.innerHTML = `<strong>${hero.name}の転職先を選んでください:</strong>`;
-    availableJobs.forEach(job => {
-        const jobButton = document.createElement('button');
-        jobButton.textContent = job;
-        jobButton.onclick = () => {
-            confirmChangeJob(heroIndex, job); // 転職を確定
-        };
-        actions.appendChild(jobButton);
-    });
-    const backButton = document.createElement('button');
-    backButton.textContent = '戻る';
-    backButton.onclick = visitTemple;
-    actions.appendChild(backButton);
 }
 
 function applyBattleBuff(hero, stat, apply_type='add', value) {
@@ -1032,11 +994,6 @@ function applyBattleBuff(hero, stat, apply_type='add', value) {
         hero.buffs[stat] += Math.floor(hero[stat] + hero.buffs[stat]) * value;
         logWrite(`${hero.name}の${hero[stat]}が${Math.floor(hero[stat] + hero.buffs[stat]) * value}${value}されました！`);
     }
-}
-
-function resetBuffs() {
-    heroes.forEach(hero => {hero.buffs = { hp: 0, mp: 0, str: 0 }});
-    enemies.forEach(enemy => {enemy.buffs = { hp: 0, mp: 0, str: 0 }});
 }
 
 startBattle();
