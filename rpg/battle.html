@@ -408,9 +408,7 @@ function showHeroActionSelection() {
     const atkButton = document.createElement('button');
     atkButton.textContent = 'たたかう';
 
-    atkButton.onclick = () => {
-        showEnemySelectionForAttack(hero);
-    };
+    atkButton.onclick = () => {showEnemySelectionForAttack(hero)};
     actions.appendChild(atkButton);
 
     // 全員戦うボタンを追加 (testがtrueの時のみ表示)
@@ -463,9 +461,7 @@ function showHeroActionSelection() {
     if (inventory.length > 0) {
         const itemButton = document.createElement('button');
         itemButton.textContent = 'アイテム';
-        itemButton.onclick = () => {
-            showItemSelection(hero);
-        };
+        itemButton.onclick = () => {showItemSelection(hero)};
         actions.appendChild(itemButton);
     }
 }
