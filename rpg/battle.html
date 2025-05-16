@@ -207,8 +207,11 @@ const SPELLS = {
     chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
     itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
         // 追加の特殊スペル(未テスト)
-    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
-    effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+
+    // 実行したキャラクタに対象からMPを吸収する
+    drainMp: { name: 'MP吸収', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+    effect: (target, source) => {const drainAmount = Math.floor(target.mp * 0.5);target.mp -= drainAmount;source.mp += drainAmount;logWrite(`${source.name}が${target.name}からMPを吸収した!!`) } },
 
     tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
 
