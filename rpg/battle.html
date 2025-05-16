@@ -203,7 +203,6 @@ let inventory = [
     { name: 'すごい力の種', type: 'buff', range: 'single', buff: 'str', val: [20, 30], cost: 0, apply_type: 'multiply'},
 ];
 
-
 const SPELLS = {
     chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
     itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
@@ -211,7 +210,6 @@ const SPELLS = {
 const ULT_SPELLS = {
     kuro: { name: '黒', cost: 6, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 黒魔道士: 1 } },
     shiro: { name: '白', cost: 6, type: 'heal', range: 'all', val: [10, 15], requiredJobs: { 白魔道士: 1 } },
-
     saisei: { name: '再生', cost: 20, type: 'heal', range: 'single', val: [50, 70], requiredJobs: { 僧侶: 3 } },
     tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
     fukaiKuro: { name: '深い黒', cost: 25, type: 'dmg', range: 'all', val: [30, 50], requiredJobs: { 黒魔道士: 6 } },
@@ -239,6 +237,10 @@ const ULT_SPELLS = {
     konmeiYu: { name: '昏明癒', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 黒魔道士: 2, 白魔道士: 2 } },
     seiAnRin: { name: '聖闇輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 黒魔道士: 4, 白魔道士: 4 } },
 
+    // 追加の特殊スペル(未テスト)
+    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった！`) } },
+
+
 };
 
 // アクセサリのデータ構造
@@ -249,7 +251,6 @@ const ACCESSORY_LIST = [
     { name: '攻撃の腕輪', buff: 'str', value: 0.2, apply_type: 'multiply' },
     { name: '生命の指輪', buff: 'hp', value: 0.1, apply_type: 'multiply' },
 ];
-
 
 // 戦闘終了時にアクセサリをドロップ
 function dropAccessories(enemyCount) {
@@ -264,6 +265,7 @@ function dropAccessories(enemyCount) {
     }
     return droppedAccessories;
 }
+
 // アクセサリを装備する関数
 function equipAccessory(hero, accessory) {
     if (!hero.accessories) {hero.accessories = []} // アクセサリの配列を初期化
