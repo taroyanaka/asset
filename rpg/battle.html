@@ -686,6 +686,12 @@ function castSpell(hero, spell, target) {
 
     hero.mp -= sp.cost;
 
+    // effectプロパティがあれば必ずそれを実行し、他の処理は行わない
+    if (sp.type === 'other') {
+        (typeof sp.effect === 'function') ? sp.effect(target, hero) : logWrite(`${spell}の効果を実行できませんでした。`);
+        return;
+    }
+
     switch (true) {
         case sp.range === 'all':
             (sp.type === 'heal' ? heroes.filter(h => h.alive) : enemies.filter(e => e.alive))
@@ -702,10 +708,6 @@ function castSpell(hero, spell, target) {
         case sp.type === 'debuff':
             const debuffTarget = enemies.filter(e => e.alive).sort((a, b) => b.hp - a.hp)[0];
             debuffTarget && applySpellEffect(hero, spell, sp, debuffTarget);
-            break;
-        case sp.type === 'effect':
-            const effectTarget = enemies.filter(e => e.alive).sort((a, b) => b.hp - a.hp)[0];
-            effectTarget && sp.effect(effectTarget, hero);
             break;
         default:
             applySpellEffect(hero, spell, sp, target);
