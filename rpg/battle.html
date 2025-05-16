@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <script>
-let test = true; // テストモードのフラグ
-// const test = false;
+// let test = true; // テストモードのフラグ
+const test = false;
 </script>
 <head>
   <meta charset="UTF-8">
@@ -72,17 +72,17 @@ let test = true; // テストモードのフラグ
   </div>
 
 <script>
-let seed = 43;
+let seed = 44;
 function rand(min, max) {
     seed = (seed * 9301 + 49297) % 233280;
     return Math.floor(seed / 233280 * (max - min + 1)) + min;
 }
 const HP_MULTIPLIER = test ? 0.1 : 1; // HP倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
 const EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
-const INITIAL_HEROES_VOLUME = 2; // 初期ヒーローの数
+const INITIAL_HEROES_VOLUME = 1; // 初期ヒーローの数
 // 初期のヒーローの名前と職業を決めるテーブル
 let INITIAL_HEROES = [
-    ['サトウ', '戦士'],
+    // ['サトウ', '戦士'],
     ['スズキ', '魔法使い'],
     ['タナカ', '僧侶'],
 ];
@@ -206,12 +206,20 @@ let inventory = [
 const SPELLS = {
     chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
     itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
+        // 追加の特殊スペル(未テスト)
+    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+    effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+
+    tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
+
+
+
 };
 const ULT_SPELLS = {
     kuro: { name: '黒', cost: 6, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 黒魔道士: 1 } },
     shiro: { name: '白', cost: 6, type: 'heal', range: 'all', val: [10, 15], requiredJobs: { 白魔道士: 1 } },
     saisei: { name: '再生', cost: 20, type: 'heal', range: 'single', val: [50, 70], requiredJobs: { 僧侶: 3 } },
-    tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
+    // tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
     fukaiKuro: { name: '深い黒', cost: 25, type: 'dmg', range: 'all', val: [30, 50], requiredJobs: { 黒魔道士: 6 } },
     mabayuiShiro: { name: '眩い白', cost: 25, type: 'heal', range: 'all', val: [30, 50], requiredJobs: { 白魔道士: 6 } },
     sakebi: { name: '叫び', cost: 0, type: 'dmg', range: 'all', val: [5, 10], requiredJobs: { 戦士: 4 } },
@@ -236,9 +244,6 @@ const ULT_SPELLS = {
     kamiiyuMon: { name: '神癒紋', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 白魔道士: 4 } },
     konmeiYu: { name: '昏明癒', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 黒魔道士: 2, 白魔道士: 2 } },
     seiAnRin: { name: '聖闇輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 黒魔道士: 4, 白魔道士: 4 } },
-
-    // 追加の特殊スペル(未テスト)
-    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
 
 
 };
@@ -362,6 +367,99 @@ function allHeroesAttack() {
     executeHeroActions(); // 全員の攻撃を即時実行
 }
 
+// function showHeroActionSelection() {
+//     if (currentHeroIndex >= heroes.length) {
+//         isEnemyTurn = true;
+//         executeHeroActions();
+//         return;
+//     }
+
+//     const hero = heroes[currentHeroIndex];
+//     if (!hero.alive) {
+//         currentHeroIndex++;
+//         showHeroActionSelection();
+//         return;
+//     }
+
+//     actions.innerHTML = `<strong>${hero.name}の行動を選択してください:</strong>`;
+//     const atkButton = document.createElement('button');
+//     atkButton.textContent = 'たたかう';
+
+//     atkButton.onclick = () => {showEnemySelectionForAttack(hero)};
+//     actions.appendChild(atkButton);
+
+//     // 全員戦うボタンを追加 (testがtrueの時のみ表示)
+//     if (test) {
+//         const allAtkButton = document.createElement('button');
+//         allAtkButton.textContent = '全員戦う';
+//         allAtkButton.onclick = () => {
+//             allHeroesAttack();
+//         };
+//         actions.appendChild(allAtkButton);
+//     }
+
+//     // 通常スペルの表示
+//     Object.entries(SPELLS).forEach(([key, sp]) => {
+//         if (hero.mp >= sp.cost) {
+//             const spellButton = document.createElement('button');
+//             spellButton.textContent = sp.name; // 日本語名を表示
+//             spellButton.onclick = () => {
+//                 const target = sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget();
+//                 if (target) {
+//                     actionsQueue.push({ hero, action: 'spell', spell: key, target });
+//                     currentHeroIndex++;
+//                     showHeroActionSelection();
+//                 }
+//             };
+//             actions.appendChild(spellButton);
+//         }
+//     });
+
+//     // 習得済みスペルの表示
+//     if (hero.learnedSpells && hero.learnedSpells.length > 0) {
+//         hero.learnedSpells.forEach(spellKey => {
+//             const sp = ULT_SPELLS[spellKey];
+//             if (hero.mp >= sp.cost) {
+//                 const spellButton = document.createElement('button');
+//                 spellButton.textContent = sp.name; // 日本語名を表示
+//                 spellButton.onclick = () => {
+//                     // const target = sp.range === 'all' ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
+//                     // effectがある場合はtargetをnullにする
+//                     const target = sp.effect ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
+
+//                     if (sp.range === 'all' || target) {
+//                         actionsQueue.push({ hero, action: 'spell', spell: spellKey, target });
+//                         currentHeroIndex++;
+//                         showHeroActionSelection();
+//                     }
+//                 };
+//                 actions.appendChild(spellButton);
+//             }
+//         });
+//     }
+
+//     if (inventory.length > 0) {
+//         const itemButton = document.createElement('button');
+//         itemButton.textContent = 'アイテム';
+//         function showItemSelection(hero) {
+//             actions.innerHTML = `<strong>使用するアイテムを選択してください:</strong>`;
+//             inventory.forEach((item, index) => {
+//                 const itemButton = document.createElement('button');
+//                 itemButton.textContent = item.name;
+//                 itemButton.onclick = () => useItem(hero, index);
+//                 actions.appendChild(itemButton);
+//             });
+
+//             const backButton = document.createElement('button');
+//             backButton.textContent = '戻る';
+//             backButton.onclick = () => showHeroActionSelection();
+//             actions.appendChild(backButton);
+//         }
+//         itemButton.onclick = () => {showItemSelection(hero)};
+//         actions.appendChild(itemButton);
+//     }
+// }
+
 function showHeroActionSelection() {
     if (currentHeroIndex >= heroes.length) {
         isEnemyTurn = true;
@@ -399,9 +497,31 @@ function showHeroActionSelection() {
             const spellButton = document.createElement('button');
             spellButton.textContent = sp.name; // 日本語名を表示
             spellButton.onclick = () => {
-                const target = sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget();
-                if (target) {
-                    actionsQueue.push({ hero, action: 'spell', spell: key, target });
+                // ターゲット選択が必要な場合は選択UIを表示
+                if (sp.range === 'single') {
+                    // 回復系は味方、攻撃系は敵から選択
+                    const targets = sp.type === 'heal'
+                        ? heroes.filter(h => h.alive)
+                        : enemies.filter(e => e.alive);
+                    actions.innerHTML = `<strong>対象を選択してください:</strong>`;
+                    targets.forEach(target => {
+                        const targetButton = document.createElement('button');
+                        targetButton.textContent = target.name;
+                        targetButton.onclick = () => {
+                            actionsQueue.push({ hero, action: 'spell', spell: key, target });
+                            currentHeroIndex++;
+                            showHeroActionSelection();
+                        };
+                        actions.appendChild(targetButton);
+                    });
+                    // 戻るボタン
+                    const backButton = document.createElement('button');
+                    backButton.textContent = '戻る';
+                    backButton.onclick = () => showHeroActionSelection();
+                    actions.appendChild(backButton);
+                } else {
+                    // 全体魔法や特殊スペルは即実行
+                    actionsQueue.push({ hero, action: 'spell', spell: key, target: null });
                     currentHeroIndex++;
                     showHeroActionSelection();
                 }
@@ -418,12 +538,29 @@ function showHeroActionSelection() {
                 const spellButton = document.createElement('button');
                 spellButton.textContent = sp.name; // 日本語名を表示
                 spellButton.onclick = () => {
-                    // const target = sp.range === 'all' ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
                     // effectがある場合はtargetをnullにする
-                    const target = sp.effect ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
-
-                    if (sp.range === 'all' || target) {
-                        actionsQueue.push({ hero, action: 'spell', spell: spellKey, target });
+                    if (sp.range === 'single' && !sp.effect) {
+                        const targets = sp.type === 'heal'
+                            ? heroes.filter(h => h.alive)
+                            : enemies.filter(e => e.alive);
+                        actions.innerHTML = `<strong>対象を選択してください:</strong>`;
+                        targets.forEach(target => {
+                            const targetButton = document.createElement('button');
+                            targetButton.textContent = target.name;
+                            targetButton.onclick = () => {
+                                actionsQueue.push({ hero, action: 'spell', spell: spellKey, target });
+                                currentHeroIndex++;
+                                showHeroActionSelection();
+                            };
+                            actions.appendChild(targetButton);
+                        });
+                        // 戻るボタン
+                        const backButton = document.createElement('button');
+                        backButton.textContent = '戻る';
+                        backButton.onclick = () => showHeroActionSelection();
+                        actions.appendChild(backButton);
+                    } else {
+                        actionsQueue.push({ hero, action: 'spell', spell: spellKey, target: null });
                         currentHeroIndex++;
                         showHeroActionSelection();
                     }
