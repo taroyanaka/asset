@@ -238,7 +238,7 @@ const ULT_SPELLS = {
     seiAnRin: { name: '聖闇輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 黒魔道士: 4, 白魔道士: 4 } },
 
     // 追加の特殊スペル(未テスト)
-    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった！`) } },
+    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
 
 
 };
@@ -418,7 +418,10 @@ function showHeroActionSelection() {
                 const spellButton = document.createElement('button');
                 spellButton.textContent = sp.name; // 日本語名を表示
                 spellButton.onclick = () => {
-                    const target = sp.range === 'all' ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
+                    // const target = sp.range === 'all' ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
+                    // effectがある場合はtargetをnullにする
+                    const target = sp.effect ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
+
                     if (sp.range === 'all' || target) {
                         actionsQueue.push({ hero, action: 'spell', spell: spellKey, target });
                         currentHeroIndex++;
@@ -699,6 +702,10 @@ function castSpell(hero, spell, target) {
         case sp.type === 'debuff':
             const debuffTarget = enemies.filter(e => e.alive).sort((a, b) => b.hp - a.hp)[0];
             debuffTarget && applySpellEffect(hero, spell, sp, debuffTarget);
+            break;
+        case sp.type === 'effect':
+            const effectTarget = enemies.filter(e => e.alive).sort((a, b) => b.hp - a.hp)[0];
+            effectTarget && sp.effect(effectTarget, hero);
             break;
         default:
             applySpellEffect(hero, spell, sp, target);
