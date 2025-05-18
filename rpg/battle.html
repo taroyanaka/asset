@@ -215,7 +215,25 @@ const SPELLS = {
 
     tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
 
-
+    // 味方にモンスターを召喚するスペル
+    summonMonster: { 
+        name: '召喚', 
+        cost: 0, 
+        type: 'summon', 
+        range: 'single', 
+        val: [0, 0], 
+        requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (caster) => {
+            const monster = ENEMY_LIST[rand(0, ENEMY_LIST.length - 1)];
+            // ヒーローとして追加（職業は"戦士"など適宜）
+            const summonedHero = createHero(monster.name, '戦士');
+            summonedHero.hp = summonedHero.maxHp;
+            summonedHero.mp = summonedHero.maxMp;
+            summonedHero.learnedSpells = [];
+            heroes.push(summonedHero);
+            logWrite(`${caster.name}は召喚を唱えた！${summonedHero.name}が味方になった!!`);
+        } 
+    },
 
 };
 const ULT_SPELLS = {
@@ -831,6 +849,18 @@ function castSpell(hero, spell, target) {
         (typeof sp.effect === 'function') ? sp.effect(target, hero) : logWrite(`${spell}の効果を実行できませんでした。`);
         return;
     }
+    // sp.type summonの場合の処理
+    if (sp.type === 'summon') {
+        const monster = ENEMY_LIST[rand(0, ENEMY_LIST.length - 1)];
+        const summonedHero = createHero(monster.name, '戦士');
+        summonedHero.hp = summonedHero.maxHp;
+        summonedHero.mp = summonedHero.maxMp;
+        summonedHero.learnedSpells = [];
+        heroes.push(summonedHero);
+        logWrite(`${hero.name}は召喚を唱えた！${summonedHero.name}が味方になった!!`);
+        return;
+    }
+    
 
     switch (true) {
         case sp.range === 'all':
