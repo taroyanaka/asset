@@ -216,13 +216,7 @@ const SPELLS = {
     tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
 
     // 味方にモンスターを召喚するスペル
-    summonMonster: { 
-        name: '召喚', 
-        cost: 0, 
-        type: 'summon', 
-        range: 'single', 
-        val: [0, 0], 
-        requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+    summonMonster: { name: '召喚', cost: 0, type: 'summon', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
         effect: (caster) => {
             const monster = ENEMY_LIST[rand(0, ENEMY_LIST.length - 1)];
             // ヒーローとして追加（職業は"戦士"など適宜）
