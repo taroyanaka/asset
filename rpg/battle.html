@@ -90,7 +90,7 @@ let INITIAL_HEROES = [
 INITIAL_HEROES = INITIAL_HEROES.slice(0, INITIAL_HEROES_VOLUME); // 初期ヒーローの数だけスライス
 
 const ENEMY_VOLUME_ARRAY = [1, 4, 8]; // 敵の出現数の配列
-const MAX_HEROES = 3; // 最大ヒーロー数
+const MAX_HEROES = 7; // 最大ヒーロー数
 const VOLUME_DROPS = 1; // 敵2体でVOLUME_DROPSが1ならdrop数は2
 const STR_PERCENTAGE = 0.4; // ステータスの割合    
 const STATUS_INHERITANCE_RATIO = 0.4; // 前職から引き継ぐステータスの割合
@@ -231,13 +231,9 @@ const SPELLS = {
     // 味方の平均レベルに近いモンスターを召喚するスペル
     summonNormalMonster: { name: '普通召喚', cost: 0, type: 'summon', range: null, val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
         effect: (target, caster) => {
-            console.log(target);
             const averageLevel = Math.round(heroes.reduce((sum, hero) => sum + hero.level, 0) / heroes.length);
-            console.log(`Average Level1: ${averageLevel}`);
             let similarLevelEnemies = ENEMY_LIST.filter(e => Math.abs(e.level - averageLevel) <= 1);
-            console.log(`Average Level2: ${averageLevel}`);
             if (similarLevelEnemies.length === 0) similarLevelEnemies = ENEMY_LIST;
-            console.log(`Average Level3: ${averageLevel}`);
             const monster = similarLevelEnemies[rand(0, similarLevelEnemies.length - 1)];
             const summonedHero = createHero(monster.name, '戦士');
             summonedHero.hp = summonedHero.maxHp;
@@ -245,6 +241,35 @@ const SPELLS = {
             summonedHero.learnedSpells = [];
             heroes.push(summonedHero);
             logWrite(`召喚を唱えた！${summonedHero.name}が味方になった!!`);
+        } 
+    },
+    // 味方の平均レベルに近いモンスターを味方の最大数まで召喚するスペル
+    summonAllies: { name: '最大召喚', cost: 0, type: 'summon', range: null, val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, caster) => {
+            const averageLevel = Math.round(heroes.reduce((sum, hero) => sum + hero.level, 0) / heroes.length);
+            let similarLevelEnemies = ENEMY_LIST.filter(e => Math.abs(e.level - averageLevel) <= 1);
+            if (similarLevelEnemies.length === 0) similarLevelEnemies = ENEMY_LIST;
+            for (let i = 0; i < MAX_HEROES - heroes.length; i++) {
+                const monster = similarLevelEnemies[rand(0, similarLevelEnemies.length - 1)];
+                const summonedHero = createHero(monster.name, '戦士');
+                summonedHero.hp = summonedHero.maxHp;
+                summonedHero.mp = summonedHero.maxMp;
+                summonedHero.learnedSpells = [];
+                heroes.push(summonedHero);
+                logWrite(`召喚を唱えた！${summonedHero.name}が味方になった!!`);
+            }
+            // MAX_HEROESに満たない場合は、残りをsimilarLevelEnemiesからランダムに召喚
+            const remainingCount = MAX_HEROES - heroes.length;
+            for (let i = 0; i < remainingCount; i++) {
+                const monster = similarLevelEnemies[rand(0, similarLevelEnemies.length - 1)];
+                const summonedHero = createHero(monster.name, '戦士');
+                summonedHero.hp = summonedHero.maxHp;
+                summonedHero.mp = summonedHero.maxMp;
+                summonedHero.learnedSpells = [];
+                heroes.push(summonedHero);
+                logWrite(`召喚を唱えた！${summonedHero.name}が味方になった!!`);
+            }
+
         } 
     },
 
