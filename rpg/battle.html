@@ -229,22 +229,13 @@ const SPELLS = {
         } 
     },
     // 味方の平均レベルに近いモンスターを召喚するスペル
-    summonNormalMonster: { 
-        name: '普通召喚', 
-        cost: 0, 
-        type: 'summon', 
-        range: null, 
-        val: [0, 0], 
-        requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+    summonNormalMonster: { name: '普通召喚', cost: 0, type: 'summon', range: null, val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
         effect: (target, caster) => {
             console.log(target);
-            // 平均レベルを計算
             const averageLevel = Math.round(heroes.reduce((sum, hero) => sum + hero.level, 0) / heroes.length);
             console.log(`Average Level1: ${averageLevel}`);
-            // 近いレベルの敵を探す（±1レベル許容）
             let similarLevelEnemies = ENEMY_LIST.filter(e => Math.abs(e.level - averageLevel) <= 1);
             console.log(`Average Level2: ${averageLevel}`);
-            // それでもいなければ全リストから
             if (similarLevelEnemies.length === 0) similarLevelEnemies = ENEMY_LIST;
             console.log(`Average Level3: ${averageLevel}`);
             const monster = similarLevelEnemies[rand(0, similarLevelEnemies.length - 1)];
