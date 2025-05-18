@@ -215,8 +215,8 @@ const SPELLS = {
 
     tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
 
-    // 味方にモンスターを召喚するスペル
-    summonMonster: { name: '召喚', cost: 0, type: 'summon', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+    // 味方にランダムでモンスターを召喚するスペル
+    summonRandomMonster: { name: '適当召喚', cost: 0, type: 'summon', range: null, val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
         effect: (caster) => {
             const monster = ENEMY_LIST[rand(0, ENEMY_LIST.length - 1)];
             // ヒーローとして追加（職業は"戦士"など適宜）
@@ -225,7 +225,35 @@ const SPELLS = {
             summonedHero.mp = summonedHero.maxMp;
             summonedHero.learnedSpells = [];
             heroes.push(summonedHero);
-            logWrite(`${caster.name}は召喚を唱えた！${summonedHero.name}が味方になった!!`);
+            logWrite(`召喚を唱えた！${summonedHero.name}が味方になった!!`);
+        } 
+    },
+    // 味方の平均レベルに近いモンスターを召喚するスペル
+    summonNormalMonster: { 
+        name: '普通召喚', 
+        cost: 0, 
+        type: 'summon', 
+        range: null, 
+        val: [0, 0], 
+        requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, caster) => {
+            console.log(target);
+            // 平均レベルを計算
+            const averageLevel = Math.round(heroes.reduce((sum, hero) => sum + hero.level, 0) / heroes.length);
+            console.log(`Average Level1: ${averageLevel}`);
+            // 近いレベルの敵を探す（±1レベル許容）
+            let similarLevelEnemies = ENEMY_LIST.filter(e => Math.abs(e.level - averageLevel) <= 1);
+            console.log(`Average Level2: ${averageLevel}`);
+            // それでもいなければ全リストから
+            if (similarLevelEnemies.length === 0) similarLevelEnemies = ENEMY_LIST;
+            console.log(`Average Level3: ${averageLevel}`);
+            const monster = similarLevelEnemies[rand(0, similarLevelEnemies.length - 1)];
+            const summonedHero = createHero(monster.name, '戦士');
+            summonedHero.hp = summonedHero.maxHp;
+            summonedHero.mp = summonedHero.maxMp;
+            summonedHero.learnedSpells = [];
+            heroes.push(summonedHero);
+            logWrite(`召喚を唱えた！${summonedHero.name}が味方になった!!`);
         } 
     },
 
@@ -838,20 +866,22 @@ function castSpell(hero, spell, target) {
 
     hero.mp -= sp.cost;
 
+        console.log(0);
     // effectプロパティがあれば必ずそれを実行し、他の処理は行わない
     if (sp.type === 'other') {
         (typeof sp.effect === 'function') ? sp.effect(target, hero) : logWrite(`${spell}の効果を実行できませんでした。`);
         return;
     }
+    console.log(1);
     // sp.type summonの場合の処理
     if (sp.type === 'summon') {
-        const monster = ENEMY_LIST[rand(0, ENEMY_LIST.length - 1)];
-        const summonedHero = createHero(monster.name, '戦士');
-        summonedHero.hp = summonedHero.maxHp;
-        summonedHero.mp = summonedHero.maxMp;
-        summonedHero.learnedSpells = [];
-        heroes.push(summonedHero);
-        logWrite(`${hero.name}は召喚を唱えた！${summonedHero.name}が味方になった!!`);
+            console.log(2);
+
+        // sp.effectを実行
+        sp.effect(target=null, hero);
+            console.log(3);
+
+        // logWrite(`${hero.name}は召喚を唱えた！${summonedHero.name}が味方になった!!`);
         return;
     }
     
