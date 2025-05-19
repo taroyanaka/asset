@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+2
 <html lang="ja">
 <script>
 // let test = true; // テストモードのフラグ
@@ -72,7 +73,7 @@ const test = false;
   </div>
 
 <script>
-let seed = 44;
+let seed = 45;
 function rand(min, max) {
     seed = (seed * 9301 + 49297) % 233280;
     return Math.floor(seed / 233280 * (max - min + 1)) + min;
@@ -207,7 +208,64 @@ const SPELLS = {
     chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
     itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
         // 追加の特殊スペル(未テスト)
-    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+    tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+
+    // 敵の最大MPと同じ量のダメージのスペル
+    dealMaxMpDmg: { name: '最大MPダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = target.maxMp;target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大MPをダメージとして食らわせた!!`) } },
+    // 敵の最大MPの倍の量のダメージのスペル
+    dealMaxDoubleMpDmg: { name: '最大MP2倍ダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = target.maxMp*2;target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大MPをダメージとして食らわせた!!`) } },
+    // 敵のMPの量のダメージのスペル
+    dealMpDmg: { name: 'MPダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = target.mp;target.hp -= dealAmount;logWrite(`${source.name}が${target.name}のMPをダメージとして食らわせた!!`) } },
+    // 敵のMPの倍の量のダメージのスペル
+    dealDoubleMpDmg: { name: 'MP2倍ダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = target.mp*2;target.hp -= dealAmount;logWrite(`${source.name}が${target.name}のMPをダメージとして食らわせた!!`) } },
+
+    // 敵の最大MPと同じ量のダメージを敵全員に与えるスペル
+    dealMaxMpDmgAll: { name: '最大MPダメージ全員', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {const dealAmount = target.maxMp;
+        for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}の最大MPをダメージとして食らわせた!!`);}
+    } },
+    
+    // 敵の最大HPと1/4の量のダメージのスペル
+    dealQuarterMaxHpDmg: { name: '最大HP1/4ダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = Math.floor(target.maxHp * 0.25);target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大HPをダメージとして食らわせた!!`) } },
+    // 敵の最大HPの半分の量のダメージのスペル
+    dealHalfMaxHpDmg: { name: '最大HP1/2ダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = Math.floor(target.maxHp * 0.5);target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大HPをダメージとして食らわせた!!`) } },
+    // 敵の最大HPの量のダメージのスペル
+    dealMaxHpDmg: { name: '最大HPダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = target.maxHp;target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大HPをダメージとして食らわせた!!`) } },
+    // 敵の最大HPと1/4の量のダメージを敵全員に与えるスペル
+    dealQuarterMaxHpDmgAll: { name: '最大HP1/4ダメージ全員', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {const dealAmount = Math.floor(target.maxHp * 0.25);
+        for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}の最大HPをダメージとして食らわせた!!`);}
+    } },
+    // 敵の最大HPと半分の量のダメージを敵全員に与えるスペル
+    dealHalfMaxHpDmgAll: { name: '最大HP1/2ダメージ全員', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {const dealAmount = Math.floor(target.maxHp * 0.5);
+        for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}の最大HPをダメージとして食らわせた!!`);}
+    } },
+
+    // enemiesの数だけ単体の敵にダメージを与えるスペル
+    dealSingleDmgAll: { name: '敵数ダメージ単体', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {const dealAmount = enemies.length;
+        target.hp -= dealAmount;logWrite(`${source.name}が${target.name}にダメージを与えた!!`);}
+    },
+
+    // enemiesの数だけ全体の敵にダメージを与えるスペル
+    dealAllDmgAll: { name: '敵数ダメージ全体', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {const dealAmount = enemies.length;
+        for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}にダメージを与えた!!`);}
+    } },
+    // heroesの数だけ単体の敵にダメージを与えるスペル
+    dealSingleDmgHeroes: { name: '味方数ダメージ単体', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {const dealAmount = heroes.length;
+        target.hp -= dealAmount;logWrite(`${source.name}が${target.name}にダメージを与えた!!`);}
+    },
+    // heroesの数だけ全体の敵にダメージを与えるスペル
+    dealAllDmgHeroes: { name: '味方数ダメージ全体', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {const dealAmount = heroes.length;
+        for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}にダメージを与えた!!`);}
+    } },
+
+
+
 
     // 実行したキャラクタに対象からMPを吸収する
     drainMp: { name: 'MP吸収', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
@@ -272,6 +330,9 @@ const SPELLS = {
 
         } 
     },
+
+
+
 
 };
 const ULT_SPELLS = {
@@ -668,7 +729,8 @@ function updateStats() {
 }
 
 function updateEnemies(){ 
-    enemiesDiv.innerHTML=enemies.map(e=>`<div class="enemy ${!e.alive?'dead':''}" data-id="${e.id}">${e.name} HP:${e.hp}/${e.maxHp}</div>`).join('');
+    // enemiesDiv.innerHTML=enemies.map(e=>`<div class="enemy ${!e.alive?'dead':''}" data-id="${e.id}">${e.name} HP:${e.hp}/${e.maxHp}</div>`).join('');
+    enemiesDiv.innerHTML=enemies.map(e=>`<div class="enemy ${!e.alive?'dead':''}" data-id="${e.id}">${e.name} HP:${e.hp}/${e.maxHp} MP:${e.mp}/${e.maxMp}</div>`).join('');
 }
 
 function spawnEnemies(count = 3) {
