@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-3
+5
 <html lang="ja">
 <script>
 // let test = true; // テストモードのフラグ
@@ -124,8 +124,10 @@ const JOB_GROWTH = {
 };
 // ゲームのテンポのために初期レベル帯のエネミーの経験値は高く設定
 let ENEMY_LIST = [
-{name: 'スライム', level: 1, hp: 30, mp: 0, exp: 50, maxHp: 80, maxMp: 0, str: 12, int: 2},
-{name: 'バンシー', level: 1, hp: 25, mp: 10, exp: 60, maxHp: 25, maxMp: 10, str: 8, int: 6},
+// {name: 'スライム', level: 1, hp: 30, mp: 0, exp: 50, maxHp: 80, maxMp: 0, str: 12, int: 2},
+{name: 'スライム', level: 1, hp: 30, mp: 20, exp: 50, maxHp: 80, maxMp: 20, str: 12, int: 2},
+// {name: 'バンシー', level: 1, hp: 25, mp: 10, exp: 60, maxHp: 25, maxMp: 10, str: 8, int: 6},
+{name: 'バンシー', level: 1, hp: 25, mp: 40, exp: 60, maxHp: 25, maxMp: 40, str: 8, int: 6},
 {name: 'コボルト', level: 1, hp: 20, mp: 0, exp: 90, maxHp: 20, maxMp: 0, str: 10, int: 4},
 {name: 'ゴブリン', level: 2, hp: 40, mp: 0, exp: 90, maxHp: 40, maxMp: 0, str: 12, int: 5},
 {name: 'バジリスク', level: 2, hp: 35, mp: 5, exp: 100, maxHp: 35, maxMp: 5, str: 14, int: 7},
@@ -204,11 +206,75 @@ let inventory = [
     { name: 'すごい力の種', type: 'buff', range: 'single', buff: 'str', val: [20, 30], cost: 0, apply_type: 'multiply'},
 ];
 
+// SPELLの実装方針としてHP回復系は実装しない(別ゲーで敵/味方問わず戦闘中の回復がゲーム体験に悪影響と感じたため)
+// 味方のHP回復系はアイテムで実装して短期決戦を促す
 const SPELLS = {
-    chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
+    // chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
     itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
         // 追加の特殊スペル(未テスト)
     tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+    // 味方全員のHPとMPを入れ替えるスペル
+    tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+
+    // 単体の味方にLvの数だけbuffs.strに上昇するスペル
+    buffStrByLevel: { name: 'レベル分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        console.log(source);
+        console.log(target);
+        const buff_target = target[0];
+        console.log(buff_target);
+        const buffAmount = source.level;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にレベル(${buffAmount})分のバフをかけた!!`) } },
+
+    // 単体の味方に最大HPの数だけbuffs.strに上昇するスペル
+    buffStrByMaxHp: { name: '最大HP分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = buff_target.maxHp;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}に最大HP(${buffAmount})分のバフをかけた!!`) } },
+    // 単体の味方に最大MPの数だけbuffs.strに上昇するスペル
+    buffStrByMaxMp: { name: '最大MP分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = buff_target.maxMp;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}に最大MP(${buffAmount})分のバフをかけた!!`) } },
+    // 単体の味方にHPの数だけbuffs.strに上昇するスペル
+    buffStrByHp: { name: 'HP分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = buff_target.hp;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にHP(${buffAmount})分のバフをかけた!!`) } },
+    // 単体の味方にMPの数だけbuffs.strに上昇するスペル
+    buffStrByMp: { name: 'MP分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = buff_target.mp;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にMP(${buffAmount})分のバフをかけた!!`) } },
+    // 味方全体に最大HPの数だけbuffs.strに上昇するスペル
+    buffStrByAllMaxHp: { name: '全員最大HP分Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        for (let i = 0; i < target.length; i++) {const buff_target = target[i];const buffAmount = buff_target.maxHp;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}に最大HP(${buffAmount})分のバフをかけた!!`) } } },
+    // 味方全体に最大MPの数だけbuffs.strに上昇するスペル
+    buffStrByAllMaxMp: { name: '全員最大MP分Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        for (let i = 0; i < target.length; i++) {const buff_target = target[i];const buffAmount = buff_target.maxMp;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}に最大MP(${buffAmount})分のバフをかけた!!`) } } },
+    // 単体の味方のbuffs.strを2倍にするスペル(現在の数値が0の場合は2倍にならない)
+    buffStrDouble: { name: 'Strバフ2倍', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        if (buff_target.buffs.str > 0) {buff_target.buffs.str *= 2;logWrite(`${source.name}は${buff_target.name}のStrバフを2倍にした!!`) } } },
+    // 味方全体のbuffs.strを2倍にするスペル(現在の数値が0の場合は2倍にならない)
+    buffStrDoubleAll: { name: '全員Strバフ2倍', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        for (let i = 0; i < target.length; i++) {const buff_target = target[i];if (buff_target.buffs.str > 0) {buff_target.buffs.str *= 2;logWrite(`${source.name}は${buff_target.name}のStrバフを2倍にした!!`) } } } },
+
+    
+
+
+    // 単体の敵の最大HPの量だけMPを回復する(最大MPまで充填できる)スペル
+    recoverMpByEnemyMaxHp: {name: '敵最大HP分MP回復',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {console.log("xxxXXX");const recoverAmount = target.maxHp;source.mp = recoverAmount > source.maxMp ? source.maxMp : recoverAmount;logWrite(`${source.name}は${target.name}の最大HP(${recoverAmount})分MPを回復した!!`)}},
+    // 単体の敵の最大HPの量だけMPを回復する(最大MPを超えて充填できる)スペル
+    recoverMpByEnemyMaxHpOver: {name: '敵最大HP分MP回復(リミットブレイク)',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = target.maxHp;source.mp += recoverAmount;logWrite(`${source.name}は${target.name}の最大HP(${recoverAmount})分MPを回復した!!`)}},
+    // 敵全員の最大HPの合計だけMPを回復する(最大MPまで充填できる)スペル
+    recoverMpByAllEnemiesMaxHp: {name: '敵全員最大HP分MP回復',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = enemies.reduce((sum, enemy) => sum + enemy.maxHp, 0);source.mp = recoverAmount > source.maxMp ? source.maxMp : recoverAmount;logWrite(`${source.name}は敵全員の最大HP(${recoverAmount})分MPを回復した!!`)}},
+    // 敵全員の最大HPの合計だけMPを回復する(最大MPを超えて充填できる)スペル
+    recoverMpByAllEnemiesMaxHpOver: {name: '敵全員最大HP分MP回復(リミットブレイク)',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = enemies.reduce((sum, enemy) => sum + enemy.maxHp, 0);source.mp += recoverAmount;logWrite(`${source.name}は敵全員の最大HP(${recoverAmount})分MPを回復した!!`)}},
+    // 単体の敵の最大MPの量だけMPを回復する(最大MPまで充填できる)スペル
+    recoverMpByEnemyMaxMp: {name: '敵最大MP分MP回復',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = target.maxMp;source.mp = recoverAmount > source.maxMp ? source.maxMp : recoverAmount;logWrite(`${source.name}は${target.name}の最大MP(${recoverAmount})分MPを回復した!!`)}},
+    // 単体の敵の最大MPの量だけMPを回復する(最大MPを超えて充填できる)スペル
+    recoverMpByEnemyMaxMpOver: {name: '敵最大MP分MP回復(リミットブレイク)',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = target.maxMp;source.mp += recoverAmount;logWrite(`${source.name}は${target.name}の最大MP(${recoverAmount})分MPを回復した!!`)}},
+    // 敵全員の最大MPの合計だけMPを回復する(最大MPまで充填できる)スペル
+    recoverMpByAllEnemiesMaxMp: {name: '敵全員最大MP分MP回復',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = enemies.reduce((sum, enemy) => sum + enemy.maxMp, 0);source.mp = recoverAmount > source.maxMp ? source.maxMp : recoverAmount;logWrite(`${source.name}は敵全員の最大MP(${recoverAmount})分MPを回復した!!`)}},
+    // 敵全員の最大MPの合計だけMPを回復する(最大MPを超えて充填できる)スペル
+    recoverMpByAllEnemiesMaxMpOver: {name: '敵全員最大MP分MP回復(リミットブレイク)',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = enemies.reduce((sum, enemy) => sum + enemy.maxMp, 0);source.mp += recoverAmount;logWrite(`${source.name}は敵全員の最大MP(${recoverAmount})分MPを回復した!!`)}},
+
+
 
     // 敵の最大MPと同じ量のダメージのスペル
     dealMaxMpDmg: { name: '最大MPダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = target.maxMp;target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大MPをダメージとして食らわせた!!`) } },
@@ -337,33 +403,33 @@ const SPELLS = {
 };
 const ULT_SPELLS = {
     kuro: { name: '黒', cost: 6, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 黒魔道士: 1 } },
-    shiro: { name: '白', cost: 6, type: 'heal', range: 'all', val: [10, 15], requiredJobs: { 白魔道士: 1 } },
-    saisei: { name: '再生', cost: 20, type: 'heal', range: 'single', val: [50, 70], requiredJobs: { 僧侶: 3 } },
+    // shiro: { name: '白', cost: 6, type: 'heal', range: 'all', val: [10, 15], requiredJobs: { 白魔道士: 1 } },
+    // saisei: { name: '再生', cost: 20, type: 'heal', range: 'single', val: [50, 70], requiredJobs: { 僧侶: 3 } },
     // tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
     fukaiKuro: { name: '深い黒', cost: 25, type: 'dmg', range: 'all', val: [30, 50], requiredJobs: { 黒魔道士: 6 } },
-    mabayuiShiro: { name: '眩い白', cost: 25, type: 'heal', range: 'all', val: [30, 50], requiredJobs: { 白魔道士: 6 } },
+    // mabayuiShiro: { name: '眩い白', cost: 25, type: 'heal', range: 'all', val: [30, 50], requiredJobs: { 白魔道士: 6 } },
     sakebi: { name: '叫び', cost: 0, type: 'dmg', range: 'all', val: [5, 10], requiredJobs: { 戦士: 4 } },
     houkou: { name: '咆哮', cost: 0, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 戦士: 6 } },
-    tetsuheiYu: { name: '鉄壁癒', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 僧侶: 2 } },
-    senshinOn: { name: '戦神恩', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 僧侶: 4 } },
+    // tetsuheiYu: { name: '鉄壁癒', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 僧侶: 2 } },
+    // senshinOn: { name: '戦神恩', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 僧侶: 4 } },
     makenJin: { name: '魔斬刃', cost: 5, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 魔法使い: 2 } },
     kenmaJin: { name: '剣魔陣', cost: 10, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 魔法使い: 4 } },
     kokuenGe: { name: '黒炎撃', cost: 5, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 黒魔道士: 2 } },
     anzanJin: { name: '暗斬陣', cost: 10, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 黒魔道士: 4 } },
-    seigoJin: { name: '聖護陣', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 白魔道士: 2 } },
-    kosenKo: { name: '光戦鼓', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 白魔道士: 4 } },
-    iyaseiKo: { name: '癒精光', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 魔法使い: 2 } },
-    kamiiyuWa: { name: '神癒輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 魔法使い: 4 } },
+    // seigoJin: { name: '聖護陣', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 白魔道士: 2 } },
+    // kosenKo: { name: '光戦鼓', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 白魔道士: 4 } },
+    // iyaseiKo: { name: '癒精光', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 魔法使い: 2 } },
+    // kamiiyuWa: { name: '神癒輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 魔法使い: 4 } },
     yamiyuHo: { name: '闇癒法', cost: 10, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 黒魔道士: 2 } },
     kuroFukuin: { name: '黒福音', cost: 20, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 黒魔道士: 4 } },
-    seiyuJutsu: { name: '清癒術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 白魔道士: 2 } },
-    kodoRin: { name: '光導輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 白魔道士: 4 } },
+    // seiyuJutsu: { name: '清癒術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 白魔道士: 2 } },
+    // kodoRin: { name: '光導輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 白魔道士: 4 } },
     mashoJin: { name: '魔焼陣', cost: 10, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 魔法使い: 2, 黒魔道士: 2 } },
     meishoHa: { name: '冥衝波', cost: 20, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 黒魔道士: 4 } },
-    seikoJutsu: { name: '精光術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 魔法使い: 2, 白魔道士: 2 } },
-    kamiiyuMon: { name: '神癒紋', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 白魔道士: 4 } },
-    konmeiYu: { name: '昏明癒', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 黒魔道士: 2, 白魔道士: 2 } },
-    seiAnRin: { name: '聖闇輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 黒魔道士: 4, 白魔道士: 4 } },
+    // seikoJutsu: { name: '精光術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 魔法使い: 2, 白魔道士: 2 } },
+    // kamiiyuMon: { name: '神癒紋', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 白魔道士: 4 } },
+    // konmeiYu: { name: '昏明癒', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 黒魔道士: 2, 白魔道士: 2 } },
+    // seiAnRin: { name: '聖闇輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 黒魔道士: 4, 白魔道士: 4 } },
 
 
 };
@@ -619,10 +685,20 @@ function showHeroActionSelection() {
             spellButton.onclick = () => {
                 // ターゲット選択が必要な場合は選択UIを表示
                 if (sp.range === 'single') {
-                    // 回復系は味方、攻撃系は敵から選択
-                    const targets = sp.type === 'heal'
-                        ? heroes.filter(h => h.alive)
-                        : enemies.filter(e => e.alive);
+                    // --- ここを修正 ---
+                    // 回復系は味方、攻撃系は敵、その他は両方
+                    let targets = [];
+                    if (sp.type === 'heal') {
+                        targets = heroes.filter(h => h.alive);
+                    } else if (sp.type === 'dmg') {
+                        targets = enemies.filter(e => e.alive);
+                    } else {
+                        // buffやotherなどは味方も敵も選択肢に
+                        targets = [
+                            ...heroes.filter(h => h.alive),
+                            ...enemies.filter(e => e.alive)
+                        ];
+                    }
                     actions.innerHTML = `<strong>対象を選択してください:</strong>`;
                     targets.forEach(target => {
                         const targetButton = document.createElement('button');
@@ -944,7 +1020,19 @@ function castSpell(hero, spell, target) {
 
     hero.mp -= sp.cost;
 
-        console.log(0);
+    console.log(0);
+    if (sp.type === 'buff') {
+        // 味方を指定してその味方にbuffをかける(もしくは味方全体にかける)
+        const buffTarget = sp.range === 'all' ? heroes.filter(h => h.alive) : [target];
+        // console.log(target);
+        console.log(buffTarget);
+        // console.log(source);
+        sp.effect(buffTarget, hero);
+
+
+        return;
+    }
+
     // effectプロパティがあれば必ずそれを実行し、他の処理は行わない
     if (sp.type === 'other') {
         (typeof sp.effect === 'function') ? sp.effect(target, hero) : logWrite(`${spell}の効果を実行できませんでした。`);
@@ -1080,6 +1168,8 @@ function giveExp() {
     let totalExp = enemies.reduce((sum, e) => sum + (e.alive ? 0 : e.exp), 0); // 倒した敵の経験値を合計
     let sharedExp = Math.floor(totalExp / heroes.length); // パーティ全員で等分
     heroes.forEach(hero => {
+        if (!hero.alive) return; // 死亡しているキャラクターはスキップ
+        hero.mp = hero.maxMp < hero.mp ? hero.maxMp : hero.mp; // 最大値を超えたMPを最大値に切り捨て(最大MPを超えてMPをチャージするスペルが存在するため)
         hero.exp += sharedExp; // 経験値を加算
         logWrite(`${hero.name}は${sharedExp}の経験値を得た！（現在の経験値: ${hero.exp}）`);
         while (hero.exp >= calculateExpForLevel(hero.level)) {
