@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-7
+1
 <html lang="ja">
 <script>
 // let test = true; // テストモードのフラグ
@@ -64,6 +64,46 @@ const test = false;
 </head>
 <body>
   <div class="left-column">
+
+    <!-- テストモード用設定UI -->
+    <div id="test-settings">
+      <h3>テスト用設定</h3>
+<!-- HP_MULTIPLIER -->
+<label>HP倍率: <input id="input-hp-mult" type="number" step="0.01" value="1"></label><br>
+<!-- EXP_MULTIPLIER -->
+<label>EXP倍率: <input id="input-exp-mult" type="number" step="0.01" value="1"></label><br>
+<!-- INITIAL_HEROES_VOLUME -->
+<label>初期ヒーロー数: <input id="input-initial-heroes-volume" type="number" value="1"></label><br>
+<!-- INITIAL_HEROES -->
+<label>初期ヒーロー: <input id="input-initial-heroes" type="text" value="スズキ,魔法使い;タナカ,僧侶"></label><br>
+<!-- ENEMY_VOLUME_ARRAY -->
+<label>敵の出現数: <input id="input-enemy-volume-array" type="text" value="1,4,8"></label><br>
+<!-- MAX_HEROES -->
+<label>最大ヒーロー数: <input id="input-max-heroes" type="number" value="7"></label><br>
+<!-- VOLUME_DROPS -->
+<label>ドロップ数: <input id="input-volume-drops" type="number" value="1"></label><br>
+<!-- STR_PERCENTAGE -->
+<label>ステータスの割合: <input id="input-str-percentage" type="number" step="0.01" value="0.4"></label><br>
+<!-- STATUS_INHERITANCE_RATIO -->
+<label>ステータス引き継ぎ割合: <input id="input-status-inheritance-ratio" type="number" step="0.01" value="0.4"></label><br>
+<!-- ENEMY_FRIENDLY_PER -->
+<label>敵の味方割合: <input id="input-enemy-friendly-per" type="number" value="50"></label><br>
+<!-- ACCESSORY_DROP_RATE -->
+<label>アクセサリドロップ率: <input id="input-accessory-drop-rate" type="number" value="90"></label><br>
+<!-- MAX_ACCESSORIES_PER_HERO -->
+<label>最大装備数: <input id="input-max-accessories-per-hero" type="number" value="1"></label><br>
+<!-- JOBS -->
+<!-- JOB_GROWTH -->
+<!-- ENEMY_LIST -->
+<!-- ITEM_LIST -->
+<!-- SPELLS -->
+<!-- ULT_SPELLS -->
+<!-- ACCESSORY_LIST -->
+
+      <button id="btn-apply-settings" onclick="startBattle()">設定を適用</button>
+    </div>
+
+
     <div class="log" id="log"></div>
   </div>
   <div class="right-column">
@@ -78,9 +118,9 @@ function rand(min, max) {
     seed = (seed * 9301 + 49297) % 233280;
     return Math.floor(seed / 233280 * (max - min + 1)) + min;
 }
-const HP_MULTIPLIER = test ? 0.1 : 1; // HP倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
-const EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
-const INITIAL_HEROES_VOLUME = 1; // 初期ヒーローの数
+let HP_MULTIPLIER = test ? 0.1 : 1; // HP倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
+let EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
+let INITIAL_HEROES_VOLUME = 1; // 初期ヒーローの数
 // 初期のヒーローの名前と職業を決めるテーブル
 let INITIAL_HEROES = [
     // ['サトウ', '戦士'],
@@ -90,16 +130,16 @@ let INITIAL_HEROES = [
 
 INITIAL_HEROES = INITIAL_HEROES.slice(0, INITIAL_HEROES_VOLUME); // 初期ヒーローの数だけスライス
 
-const ENEMY_VOLUME_ARRAY = [1, 4, 8]; // 敵の出現数の配列
-const MAX_HEROES = 7; // 最大ヒーロー数
-const VOLUME_DROPS = 1; // 敵2体でVOLUME_DROPSが1ならdrop数は2
-const STR_PERCENTAGE = 0.4; // ステータスの割合    
-const STATUS_INHERITANCE_RATIO = 0.4; // 前職から引き継ぐステータスの割合
-const ENEMY_FRIENDLY_PER = test ? 100 : 50;
+let ENEMY_VOLUME_ARRAY = [1, 4, 8]; // 敵の出現数の配列
+let MAX_HEROES = 7; // 最大ヒーロー数
+let VOLUME_DROPS = 1; // 敵2体でVOLUME_DROPSが1ならdrop数は2
+let STR_PERCENTAGE = 0.4; // ステータスの割合    
+let STATUS_INHERITANCE_RATIO = 0.4; // 前職から引き継ぐステータスの割合
+let ENEMY_FRIENDLY_PER = test ? 100 : 50;
 // アクセサリのドロップ確率（1体あたりのドロップ確率をパーセンテージで設定）
-const ACCESSORY_DROP_RATE = 90; // 90%の確率で1体あたりドロップ
+let ACCESSORY_DROP_RATE = 90; // 90%の確率で1体あたりドロップ
 // 1キャラ当たりの最大装備数
-const MAX_ACCESSORIES_PER_HERO = 1; // 1キャラ当たりの最大装備数
+let MAX_ACCESSORIES_PER_HERO = 1; // 1キャラ当たりの最大装備数
 
 const log = document.getElementById('log');
 const stats = document.getElementById('stats');
@@ -107,7 +147,7 @@ const enemiesDiv = document.getElementById('enemies');
 const actions = document.getElementById('actions');
 
 
-const JOBS = {
+let JOBS = {
     戦士: { hp: 80, mp: 0 },
     僧侶: { hp: 60, mp: 20 },
     魔法使い: { hp: 50, mp: 30 },
@@ -115,7 +155,7 @@ const JOBS = {
     白魔道士: { hp: 50, mp: 30 },
 };
 
-const JOB_GROWTH = {
+let JOB_GROWTH = {
     戦士: { maxHp: [5, 10], maxMp: [0, 0] },
     僧侶: { maxHp: [3, 6], maxMp: [3, 6] },
     魔法使い: { maxHp: [2, 5], maxMp: [4, 8] },
@@ -218,9 +258,6 @@ const SPELLS = {
     itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
         // 追加の特殊スペル(未テスト)
     tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
-
-
-
 
     // 味方全員のHPとMPを入れ替えるスペル
     tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
