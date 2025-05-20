@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-5
+7
 <html lang="ja">
 <script>
 // let test = true; // テストモードのフラグ
@@ -128,6 +128,7 @@ let ENEMY_LIST = [
 {name: 'スライム', level: 1, hp: 30, mp: 20, exp: 50, maxHp: 80, maxMp: 20, str: 12, int: 2},
 // {name: 'バンシー', level: 1, hp: 25, mp: 10, exp: 60, maxHp: 25, maxMp: 10, str: 8, int: 6},
 {name: 'バンシー', level: 1, hp: 25, mp: 40, exp: 60, maxHp: 25, maxMp: 40, str: 8, int: 6},
+
 {name: 'コボルト', level: 1, hp: 20, mp: 0, exp: 90, maxHp: 20, maxMp: 0, str: 10, int: 4},
 {name: 'ゴブリン', level: 2, hp: 40, mp: 0, exp: 90, maxHp: 40, maxMp: 0, str: 12, int: 5},
 {name: 'バジリスク', level: 2, hp: 35, mp: 5, exp: 100, maxHp: 35, maxMp: 5, str: 14, int: 7},
@@ -208,22 +209,432 @@ let inventory = [
 
 // SPELLの実装方針としてHP回復系は実装しない(別ゲーで敵/味方問わず戦闘中の回復がゲーム体験に悪影響と感じたため)
 // 味方のHP回復系はアイテムで実装して短期決戦を促す
+// 同様の理由でdebuff系も実装しない
+// SPELLの数は100を目処として実装する(一通り実装してからゲーム体験が悪くなるものをコメントアウトしていく)
+// スペル中心のゲームになるだろうからスペル全般テストコード必要
+// コードの行数が多くなるので、スペルの実装は別ファイルに分けるかも
 const SPELLS = {
     // chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
     itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
         // 追加の特殊スペル(未テスト)
     tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+
+
+
+
     // 味方全員のHPとMPを入れ替えるスペル
     tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
 
+    // 敵単体のMPを自分のMPと入れ替えるスペル
+    tradeMp: { name: 'MP変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const tempMp = target.mp;target.mp = source.mp;source.mp = tempMp;logWrite(`${source.name}は${target.name}のMPと入れ替えた!!`) } },
+    // 敵単体の最大MPを自分のMPと入れ替えるスペル
+    tradeMaxMp: { name: '最大MP変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const tempMp = target.maxMp;target.maxMp = source.mp;source.mp = tempMp;logWrite(`${source.name}は${target.name}の最大MPと入れ替えた!!`) } },
+    // 敵全体のMPの累計を自分のMPにするスペル
+    tradeMpAll: { name: '全員MP変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.mp += totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分吸収した!!`) } },
+    // 敵全体の最大MPの累計を自分のMPにするスペル
+    tradeMaxMpAll: { name: '全員最大MP変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const totalMaxMp = target.reduce((sum, enemy) => sum + enemy.maxMp, 0);source.mp += totalMaxMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}の最大MPを合計(${totalMaxMp})分吸収した!!`) } },
+    // 敵単体のMPを自分のbuffs.strにするスペル
+    tradeMpByStr: { name: 'MP変換(バフ)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const tempMp = target.mp;target.mp = source.buffs.str;source.buffs.str = tempMp;logWrite(`${source.name}は${target.name}のMPとバフを入れ替えた!!`) } },
+    // 敵単体の最大MPを自分のbuffs.strにするスペル
+    tradeMaxMpByStr: { name: '最大MP変換(バフ)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const tempMp = target.maxMp;target.maxMp = source.buffs.str;source.buffs.str = tempMp;logWrite(`${source.name}は${target.name}の最大MPとバフを入れ替えた!!`) } },
+    // 敵全体のMPの累計を自分のbuffs.strにするスペル
+    tradeMpAllByStr: { name: '全員MP変換(バフ)', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.buffs.str += totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分吸収した!!`) } },
+
+    // 敵全体の数だけ自分のbuffs.strを上昇するスペル
+    buffStrByEnemyCount: { name: '敵の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は${target.map(e => e.name).join(',')}の数(${buffAmount})分のバフをかけた!!`) } },
+    // 敵全体の数だけ味方全員のbuffs.strを上昇するスペル
+    buffStrByEnemyCount2: { name: '敵の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+    // 味方全体の数だけ自分のbuffs.strを上昇するスペル
+    buffStrByAllCount: { name: '全員の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+    // 味方全体の数だけ味方全員のbuffs.strを上昇するスペル
+    buffStrByAllCount2: { name: '全員の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+    // 敵と味方の全体の合計数だけ自分のbuffs.strを上昇するスペル
+    buffStrByAllCount2: { name: '全員の数分Strバフ(敵味方)', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = target.length + enemies.length;source.buffs.str += buffAmount;logWrite(`${source.name}は敵と味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+    // 敵と味方の全体の合計数だけ味方全員のbuffs.strを上昇するスペル
+    buffStrByAllCount3: { name: '全員の数分全員Strバフ(敵味方)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = target.length + enemies.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は敵と味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+
+    // 所持するアイテムの数だけ単体の味方のbuffs.strを上昇するスペル
+    buffStrByItemCount: { name: 'アイテムの数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = inventory.length;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にアイテム(${buffAmount})分のバフをかけた!!`) } },
+    // 所持するアイテムの数だけ味方全員のbuffs.strを上昇するスペル
+    buffStrByItemCount2: { name: 'アイテムの数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = inventory.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員にアイテム(${buffAmount})分のバフをかけた!!`) } },
+
+    // 戦闘回数*10だけ単体の味方のbuffs.strを上昇するスペル
+    buffStrByBattleCount: { name: '戦闘回数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = battleCount * 10;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}に戦闘回数(${buffAmount})分のバフをかけた!!`) } },
+    // 戦闘回数*10だけ味方全員のbuffs.strを上昇するスペル
+    buffStrByBattleCount2: { name: '戦闘回数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = battleCount * 10;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員に戦闘回数(${buffAmount})分のバフをかけた!!`) } },
+    // 戦闘回数*100だけ単体の味方のbuffs.strを上昇するスペル
+    buffStrByBattleCount3: { name: '戦闘回数分Strバフ(100倍)', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = battleCount * 100;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}に戦闘回数(${buffAmount})分のバフをかけた!!`) } },
+    // 戦闘回数*100だけ味方全員のbuffs.strを上昇するスペル
+    buffStrByBattleCount4: { name: '戦闘回数分全員Strバフ(100倍)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buffAmount = battleCount * 100;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員に戦闘回数(${buffAmount})分のバフをかけた!!`) } },
+
+
+    // 敵1体をランダムな別のenemyに入れ替えるスペル
+    tradeEnemyRandom: { name: '敵を入れ替え(ランダム)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const randomIndex = Math.floor(Math.random() * enemies.length);
+        const temp = target[0];target[0] = enemies[randomIndex];enemies[randomIndex] = temp;logWrite(`${source.name}は${target[0].name}と${enemies[randomIndex].name}を入れ替えた!!`) } },
+    // 敵全てをランダムな別のenemyに入れ替えるスペル
+    tradeEnemyAllRandom: { name: '敵を入れ替え(全員ランダム)', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        for (let i = 0; i < target.length; i++) {
+            const randomIndex = Math.floor(Math.random() * enemies.length);
+            const temp = target[i];target[i] = enemies[randomIndex];enemies[randomIndex] = temp;
+        }logWrite(`${source.name}は${target.map(e => e.name).join(',')}と${enemies.map(e => e.name).join(',')}を入れ替えた!!`) } },
+
+    // 敵単体が持つbuffs.strを自分のbuffs.strにするスペル
+    tradeEnemyBuffStr: { name: '敵のバフを吸収', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const temp = target[0].buffs.str;target[0].buffs.str = source.buffs.str;source.buffs.str = temp;logWrite(`${source.name}は${target[0].name}のバフを吸収した!!`) } },
+    // 敵全体が持つbuffs.strを自分のbuffs.strにするスペル
+    tradeEnemyBuffStrAll: { name: '全員のバフを吸収', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        for (let i = 0; i < target.length; i++) {
+            const temp = target[i].buffs.str;target[i].buffs.str = source.buffs.str;source.buffs.str = temp;
+        }logWrite(`${source.name}は${target.map(e => e.name).join(',')}のバフを吸収した!!`) } },
+    // 敵全体が持つbuffs.strを味方全員のbuffs.strにするスペル
+    tradeEnemyBuffStrAll2: { name: '全員のバフを吸収(全員)', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        for (let i = 0; i < target.length; i++) {
+            const temp = target[i].buffs.str;target[i].buffs.str = heroes[i].buffs.str;heroes[i].buffs.str = temp;
+        }logWrite(`${source.name}は${target.map(e => e.name).join(',')}のバフを吸収した!!`) } },
+
+
+
+
+
+    // 味方全体の最大HPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllMaxHp: { name: '全員最大HP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(heroes.reduce((sum, h) => sum + h.maxHp, 0) / heroes.length);
+            source.buffs.str += avgMaxHp;
+            logWrite(`${source.name}は味方全員の最大HP平均(${avgMaxHp})分のバフをかけた!!`);
+        } 
+    },
+    // 味方全体の最大HPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllMaxHp2: { name: '全員最大HP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(heroes.reduce((sum, h) => sum + h.maxHp, 0) / heroes.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgMaxHp;
+            }
+            logWrite(`${source.name}は味方全員の最大HP平均(${avgMaxHp})分のバフをかけた!!`);
+        } 
+    },
+    // 味方全体の最大HPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllMaxHp: { name: '全員最大HP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(heroes.reduce((sum, h) => sum + h.maxHp, 0) / heroes.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgMaxHp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを味方全員の最大HP平均(${avgMaxHp})にした!!`);
+        } 
+    },
+    // 味方全体の最大HPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllMaxHp2: { name: '全員最大HP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(heroes.reduce((sum, h) => sum + h.maxHp, 0) / heroes.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgMaxHp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを味方全員の最大HP平均(${avgMaxHp})にした!!`);
+        } 
+    },
+    // 敵全体の最大HPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesMaxHp: { name: '敵全員最大HP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(enemies.reduce((sum, e) => sum + e.maxHp, 0) / enemies.length);
+            source.buffs.str += avgMaxHp;
+            logWrite(`${source.name}は敵全員の最大HP平均(${avgMaxHp})分のバフをかけた!!`);
+        } 
+    },
+    // 敵全体の最大HPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesMaxHp2: { name: '敵全員最大HP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(enemies.reduce((sum, e) => sum + e.maxHp, 0) / enemies.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgMaxHp;
+            }
+            logWrite(`${source.name}は敵全員の最大HP平均(${avgMaxHp})分のバフをかけた!!`);
+        } 
+    },
+    // 敵全体の最大HPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesMaxHp: { name: '敵全員最大HP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(enemies.reduce((sum, e) => sum + e.maxHp, 0) / enemies.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgMaxHp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを敵全員の最大HP平均(${avgMaxHp})にした!!`);
+        } 
+    },
+    // 敵全体の最大HPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesMaxHp2: { name: '敵全員最大HP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgMaxHp = Math.floor(enemies.reduce((sum, e) => sum + e.maxHp, 0) / enemies.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgMaxHp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを敵全員の最大HP平均(${avgMaxHp})にした!!`);
+        } 
+    },
+    // 味方全体のHPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllHp: { name: '全員HP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(heroes.reduce((sum, h) => sum + h.hp, 0) / heroes.length);
+            source.buffs.str += avgHp;
+            logWrite(`${source.name}は味方全員のHP平均(${avgHp})分のバフをかけた!!`);
+        } 
+    },
+    // 味方全体のHPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllHp2: { name: '全員HP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(heroes.reduce((sum, h) => sum + h.hp, 0) / heroes.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgHp;
+            }
+            logWrite(`${source.name}は味方全員のHP平均(${avgHp})分のバフをかけた!!`);
+        } 
+    },
+    // 味方全体のHPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllHp: { name: '全員HP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(heroes.reduce((sum, h) => sum + h.hp, 0) / heroes.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgHp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを味方全員のHP平均(${avgHp})にした!!`);
+        } 
+    },
+    // 味方全体のHPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllHp2: { name: '全員HP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(heroes.reduce((sum, h) => sum + h.hp, 0) / heroes.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgHp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを味方全員のHP平均(${avgHp})にした!!`);
+        } 
+    },
+    // 敵全体のHPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesHp: { name: '敵全員HP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(enemies.reduce((sum, e) => sum + e.hp, 0) / enemies.length);
+            source.buffs.str += avgHp;
+            logWrite(`${source.name}は敵全員のHP平均(${avgHp})分のバフをかけた!!`);
+        } 
+    },
+    // 敵全体のHPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesHp2: { name: '敵全員HP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(enemies.reduce((sum, e) => sum + e.hp, 0) / enemies.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgHp;
+            }
+            logWrite(`${source.name}は敵全員のHP平均(${avgHp})分のバフをかけた!!`);
+        } 
+    },
+    // 敵全体のHPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesHp: { name: '敵全員HP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(enemies.reduce((sum, e) => sum + e.hp, 0) / enemies.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgHp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを敵全員のHP平均(${avgHp})にした!!`);
+        } 
+    },
+    // 敵全体のHPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesHp2: { name: '敵全員HP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, source) => {
+            const avgHp = Math.floor(enemies.reduce((sum, e) => sum + e.hp, 0) / enemies.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgHp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを敵全員のHP平均(${avgHp})にした!!`);
+        } 
+    },
+
+    
+    // 味方全体の最大MPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllMaxMp: { name: '全員最大MP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(heroes.reduce((sum, h) => sum + h.maxMp, 0) / heroes.length);
+            source.buffs.str += avgMaxMp;
+            logWrite(`${source.name}は味方全員の最大MP平均(${avgMaxMp})分のバフをかけた!!`);
+        }
+    },
+    // 味方全体の最大MPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllMaxMp2: { name: '全員最大MP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(heroes.reduce((sum, h) => sum + h.maxMp, 0) / heroes.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgMaxMp;
+            }
+            logWrite(`${source.name}は味方全員の最大MP平均(${avgMaxMp})分のバフをかけた!!`);
+        }
+    },
+    // 味方全体の最大MPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllMaxMp: { name: '全員最大MP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(heroes.reduce((sum, h) => sum + h.maxMp, 0) / heroes.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgMaxMp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを味方全員の最大MP平均(${avgMaxMp})にした!!`);
+        }
+    },
+    // 味方全体の最大MPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllMaxMp2: { name: '全員最大MP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(heroes.reduce((sum, h) => sum + h.maxMp, 0) / heroes.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgMaxMp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを味方全員の最大MP平均(${avgMaxMp})にした!!`);
+        }
+    },
+    // 敵全体の最大MPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesMaxMp: { name: '敵全員最大MP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(enemies.reduce((sum, e) => sum + e.maxMp, 0) / enemies.length);
+            source.buffs.str += avgMaxMp;
+            logWrite(`${source.name}は敵全員の最大MP平均(${avgMaxMp})分のバフをかけた!!`);
+        }
+    },
+    // 敵全体の最大MPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesMaxMp2: { name: '敵全員最大MP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(enemies.reduce((sum, e) => sum + e.maxMp, 0) / enemies.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgMaxMp;
+            }
+            logWrite(`${source.name}は敵全員の最大MP平均(${avgMaxMp})分のバフをかけた!!`);
+        }
+    },
+    // 敵全体の最大MPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesMaxMp: { name: '敵全員最大MP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(enemies.reduce((sum, e) => sum + e.maxMp, 0) / enemies.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgMaxMp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを敵全員の最大MP平均(${avgMaxMp})にした!!`);
+        }
+    },
+    // 敵全体の最大MPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesMaxMp2: { name: '敵全員最大MP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMaxMp = Math.floor(enemies.reduce((sum, e) => sum + e.maxMp, 0) / enemies.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgMaxMp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを敵全員の最大MP平均(${avgMaxMp})にした!!`);
+        }
+    },
+    // 味方全体のMPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllMp: { name: '全員MP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(heroes.reduce((sum, h) => sum + h.mp, 0) / heroes.length);
+            source.buffs.str += avgMp;
+            logWrite(`${source.name}は味方全員のMP平均(${avgMp})分のバフをかけた!!`);
+        }
+    },
+    // 味方全体のMPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllMp2: { name: '全員MP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(heroes.reduce((sum, h) => sum + h.mp, 0) / heroes.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgMp;
+            }
+            logWrite(`${source.name}は味方全員のMP平均(${avgMp})分のバフをかけた!!`);
+        }
+    },
+    // 味方全体のMPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllMp: { name: '全員MP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(heroes.reduce((sum, h) => sum + h.mp, 0) / heroes.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgMp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを味方全員のMP平均(${avgMp})にした!!`);
+        }
+    },
+    // 味方全体のMPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllMp2: { name: '全員MP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(heroes.reduce((sum, h) => sum + h.mp, 0) / heroes.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgMp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを味方全員のMP平均(${avgMp})にした!!`);
+        }
+    },
+    // 敵全体のMPの平均数値を自分のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesMp: { name: '敵全員MP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(enemies.reduce((sum, e) => sum + e.mp, 0) / enemies.length);
+            source.buffs.str += avgMp;
+            logWrite(`${source.name}は敵全員のMP平均(${avgMp})分のバフをかけた!!`);
+        }
+    },
+    // 敵全体のMPの平均数値を味方全体のbuffs.strにするスペル
+    buffStrByAvgAllEnemiesMp2: { name: '敵全員MP平均分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(enemies.reduce((sum, e) => sum + e.mp, 0) / enemies.length);
+            for (let i = 0; i < heroes.length; i++) {
+                heroes[i].buffs.str += avgMp;
+            }
+            logWrite(`${source.name}は敵全員のMP平均(${avgMp})分のバフをかけた!!`);
+        }
+    },
+    // 敵全体のMPの平均数値を敵単体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesMp: { name: '敵全員MP平均分敵HPバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(enemies.reduce((sum, e) => sum + e.mp, 0) / enemies.length);
+            const enemyTarget = target[0];
+            enemyTarget.hp = avgMp;
+            logWrite(`${source.name}は${enemyTarget.name}のHPを敵全員のMP平均(${avgMp})にした!!`);
+        }
+    },
+    // 敵全体のMPの平均数値を敵全体のHPの平均数値にするスペル
+    buffEnemyHpByAvgAllEnemiesMp2: { name: '敵全員MP平均分敵HPバフ(全員)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+        effect: (target, source) => {
+            const avgMp = Math.floor(enemies.reduce((sum, e) => sum + e.mp, 0) / enemies.length);
+            for (let i = 0; i < target.length; i++) {
+                target[i].hp = avgMp;
+            }
+            logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを敵全員のMP平均(${avgMp})にした!!`);
+        }
+    },
+
+
+
+    // 単体の敵と自らを入れ替えるスペル(未テスト 他のコードも変更する必要あり)
+    tradeEnemy: { name: '敵と入れ替え', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const temp = target[0];target[0] = source;source = temp;logWrite(`${source.name}は${target[0].name}と入れ替えた!!`) } },
+
+    // 単体の敵のスペルを自らにコピーするスペル(未テスト 他のコードも変更する必要あり)
+    copyEnemySpell: { name: '敵のスペルをコピー', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const temp = target[0];target[0] = source;source = temp;logWrite(`${source.name}は${target[0].name}のスペルをコピーした!!`) } },
+
+
+
+
     // 単体の味方にLvの数だけbuffs.strに上昇するスペル
     buffStrByLevel: { name: 'レベル分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-        console.log(source);
-        console.log(target);
         const buff_target = target[0];
-        console.log(buff_target);
         const buffAmount = source.level;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にレベル(${buffAmount})分のバフをかけた!!`) } },
-
     // 単体の味方に最大HPの数だけbuffs.strに上昇するスペル
     buffStrByMaxHp: { name: '最大HP分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buff_target = target[0];
@@ -253,6 +664,46 @@ const SPELLS = {
     // 味方全体のbuffs.strを2倍にするスペル(現在の数値が0の場合は2倍にならない)
     buffStrDoubleAll: { name: '全員Strバフ2倍', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         for (let i = 0; i < target.length; i++) {const buff_target = target[i];if (buff_target.buffs.str > 0) {buff_target.buffs.str *= 2;logWrite(`${source.name}は${buff_target.name}のStrバフを2倍にした!!`) } } } },
+    // 単体の味方のbuffs.strを10倍にするスペル(現在の数値が0の場合は10倍にならない)
+    buffStrTenTimes: { name: 'Strバフ10倍', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        if (buff_target.buffs.str > 0) {buff_target.buffs.str *= 10;logWrite(`${source.name}は${buff_target.name}のStrバフを10倍にした!!`) } } },
+    // 味方全体のbuffs.strを10倍にするスペル(現在の数値が0の場合は10倍にならない)
+    buffStrTenTimesAll: { name: '全員Strバフ10倍', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        for (let i = 0; i < target.length; i++) {const buff_target = target[i];if (buff_target.buffs.str > 0) {buff_target.buffs.str *= 10;logWrite(`${source.name}は${buff_target.name}のStrバフを10倍にした!!`) } } } },
+    // 所持するexpの数だけbuffs.strに上昇するスペル
+    buffStrByExp: { name: '所持exp分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const buff_target = target[0];
+        const buffAmount = source.exp;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}に所持exp(${buffAmount})分のバフをかけた!!`) } },
+    // 所持するexpの数だけ単体の敵にダメージを与えるスペル
+    dmgByExp: { name: '所持exp分ダメージ', cost: 0, type: 'dmg', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = source.exp;target.hp -= dmgAmount;logWrite(`${source.name}は${target.name}に所持exp(${dmgAmount})分のダメージを与えた!!`) } },
+    // caster単体の所持するexpの数だけ敵全体にダメージを与えるスペル
+    dmgByAllExp: { name: '所持exp分全体ダメージ', cost: 0, type: 'dmg', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = source.exp;for (let i = 0; i < target.length; i++) {const enemy = target[i];enemy.hp -= dmgAmount;logWrite(`${source.name}は${enemy.name}に所持exp(${dmgAmount})分のダメージを与えた!!`) } } },
+    // 味方全体の所持するexpの合計数だけ敵単体にダメージを与えるスペル
+    dmgByAllExpSingle: { name: '所持exp分全体ダメージ(単体)', cost: 0, type: 'dmg', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = heroes.reduce((sum, hero) => sum + hero.exp, 0);target.hp -= dmgAmount;logWrite(`${source.name}は${target.name}に所持exp(${dmgAmount})分のダメージを与えた!!`) } },
+    // 味方全体の所持するexpの合計数だけ敵全体にダメージを与えるスペル
+    dmgByAllExpAll: { name: '所持exp分全体ダメージ(全体)', cost: 0, type: 'dmg', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = heroes.reduce((sum, hero) => sum + hero.exp, 0);for (let i = 0; i < target.length; i++) {const enemy = target[i];enemy.hp -= dmgAmount;logWrite(`${source.name}は${enemy.name}に所持exp(${dmgAmount})分のダメージを与えた!!`) } } },
+    // buffs.str*最大MPの数を敵単体にダメージを与えるスペル
+    dmgByBuffStrMaxMp: { name: 'バフStr*最大MP分ダメージ', cost: 0, type: 'dmg', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = source.buffs.str * source.maxMp;target.hp -= dmgAmount;logWrite(`${source.name}は${target.name}にバフStr(${source.buffs.str})*最大MP(${source.maxMp})分のダメージを与えた!!`) } },
+    // buffs.str*最大MPの数を敵全体にダメージを与えるスペル
+    dmgByBuffStrMaxMpAll: { name: 'バフStr*最大MP分全体ダメージ', cost: 0, type: 'dmg', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = source.buffs.str * source.maxMp;for (let i = 0; i < target.length; i++) {const enemy = target[i];enemy.hp -= dmgAmount;logWrite(`${source.name}は${enemy.name}にバフStr(${source.buffs.str})*最大MP(${source.maxMp})分のダメージを与えた!!`) } } },
+    // buffs.str*最大HPの数を敵単体にダメージを与えるスペル
+    dmgByBuffStrMaxHp: { name: 'バフStr*最大HP分ダメージ', cost: 0, type: 'dmg', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = source.buffs.str * source.maxHp;target.hp -= dmgAmount;logWrite(`${source.name}は${target.name}にバフStr(${source.buffs.str})*最大HP(${source.maxHp})分のダメージを与えた!!`) } },
+    // buffs.str*最大HPの数を敵全体にダメージを与えるスペル
+    dmgByBuffStrMaxHpAll: { name: 'バフStr*最大HP分全体ダメージ', cost: 0, type: 'dmg', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+        const dmgAmount = source.buffs.str * source.maxHp;for (let i = 0; i < target.length; i++) {const enemy = target[i];enemy.hp -= dmgAmount;logWrite(`${source.name}は${enemy.name}にバフStr(${source.buffs.str})*最大HP(${source.maxHp})分のダメージを与えた!!`) } } },
+
+
+
+
+    
 
     
 
@@ -339,6 +790,22 @@ const SPELLS = {
 
     tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
 
+    // 選択した敵と同じモンスター1体を味方に召喚するスペル
+    summonSameMonster: { name: '同じモンスター召喚', cost: 0, type: 'summon', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
+        effect: (target, caster) => {
+            const monster = ENEMY_LIST.find(e => e.name === target.name);
+            if (monster) {
+                const summonedHero = createHero(monster.name, '戦士');
+                summonedHero.hp = summonedHero.maxHp;
+                summonedHero.mp = summonedHero.maxMp;
+                summonedHero.learnedSpells = [];
+                heroes.push(summonedHero);
+                logWrite(`召喚を唱えた！${summonedHero.name}が味方になった!!`);
+            } else {
+                logWrite(`召喚に失敗した！`);
+            }
+        } 
+    },
     // 味方にランダムでモンスターを召喚するスペル
     summonRandomMonster: { name: '適当召喚', cost: 0, type: 'summon', range: null, val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
         effect: (caster) => {
@@ -401,6 +868,7 @@ const SPELLS = {
 
 
 };
+
 const ULT_SPELLS = {
     kuro: { name: '黒', cost: 6, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 黒魔道士: 1 } },
     // shiro: { name: '白', cost: 6, type: 'heal', range: 'all', val: [10, 15], requiredJobs: { 白魔道士: 1 } },
