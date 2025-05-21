@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-1
+2
 <html lang="ja">
 <script>
 // let test = true; // テストモードのフラグ
@@ -66,8 +66,11 @@ const test = false;
   <div class="left-column">
 
     <!-- テストモード用設定UI -->
-    <div id="test-settings">
-      <h3>テスト用設定</h3>
+<div id="test-settings">
+    <h3>テスト用設定</h3>
+
+<!-- JOBS -->
+<!-- JOB_GROWTH -->
 <!-- HP_MULTIPLIER -->
 <label>HP倍率: <input id="input-hp-mult" type="number" step="0.01" value="1"></label><br>
 <!-- EXP_MULTIPLIER -->
@@ -88,6 +91,10 @@ const test = false;
 <label>アクセサリドロップ率: <input id="input-accessory-drop-rate" type="number" value="90"></label><br>
 <!-- MAX_ACCESSORIES_PER_HERO -->
 <label>最大装備数: <input id="input-max-accessories-per-hero" type="number" value="1"></label><br>
+<!-- ENEMY_MORE_VOLUME -->
+<label>敵の出現数の増加数: <input id="input-enemy-more-volume" type="number" value="3"></label><br>
+<!-- ENEMY_ARRAY_VOLUME -->
+<label>敵の出現数の配列: <input id="input-enemy-array-volume" type="number" value="5"></label><br>
 
 <!-- INITIAL_HEROES -->
 <!-- ENEMY_VOLUME_ARRAY -->
@@ -117,6 +124,23 @@ function rand(min, max) {
     seed = (seed * 9301 + 49297) % 233280;
     return Math.floor(seed / 233280 * (max - min + 1)) + min;
 }
+
+
+let JOBS = {
+    戦士: { hp: 80, mp: 0 },
+    僧侶: { hp: 60, mp: 20 },
+    魔法使い: { hp: 50, mp: 30 },
+    黒魔道士: { hp: 40, mp: 40 },
+    白魔道士: { hp: 50, mp: 30 },
+};
+let JOB_GROWTH = {
+    戦士: { maxHp: [5, 10], maxMp: [0, 0] },
+    僧侶: { maxHp: [3, 6], maxMp: [3, 6] },
+    魔法使い: { maxHp: [2, 5], maxMp: [4, 8] },
+    黒魔道士: { maxHp: [0, 0], maxMp: [7, 12] },
+    白魔道士: { maxHp: [0, 0], maxMp: [6, 10] },
+};
+
 let HP_MULTIPLIER = test ? 0.1 : 1; // HP倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
 let EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
 let INITIAL_HEROES_VOLUME = 1; // 初期ヒーローの数
@@ -129,7 +153,12 @@ let INITIAL_HEROES = [
 
 INITIAL_HEROES = INITIAL_HEROES.slice(0, INITIAL_HEROES_VOLUME); // 初期ヒーローの数だけスライス
 
-let ENEMY_VOLUME_ARRAY = [1, 4, 8]; // 敵の出現数の配列
+let ENEMY_MORE_VOLUME = 3; // 敵の出現数の増加数
+let ENEMY_ARRAY_VOLUME = 3; // 敵の出現数の配列
+let ENEMY_VOLUME_ARRAY = [1];
+// ENEMY_MORE_VOLUMEが3でENEMY_ARRAY_VOLUMEが3ならENEMY_VOLUME_ARRAYは[1, 4, 7]になる
+ENEMY_VOLUME_ARRAY = Array.from({ length: ENEMY_ARRAY_VOLUME }, (_, i) => (i + 1) * ENEMY_MORE_VOLUME + 1);
+
 let MAX_HEROES = 7; // 最大ヒーロー数
 let VOLUME_DROPS = 1; // 敵2体でVOLUME_DROPSが1ならdrop数は2
 let STR_PERCENTAGE = 0.4; // ステータスの割合    
@@ -145,22 +174,6 @@ const stats = document.getElementById('stats');
 const enemiesDiv = document.getElementById('enemies');
 const actions = document.getElementById('actions');
 
-
-let JOBS = {
-    戦士: { hp: 80, mp: 0 },
-    僧侶: { hp: 60, mp: 20 },
-    魔法使い: { hp: 50, mp: 30 },
-    黒魔道士: { hp: 40, mp: 40 },
-    白魔道士: { hp: 50, mp: 30 },
-};
-
-let JOB_GROWTH = {
-    戦士: { maxHp: [5, 10], maxMp: [0, 0] },
-    僧侶: { maxHp: [3, 6], maxMp: [3, 6] },
-    魔法使い: { maxHp: [2, 5], maxMp: [4, 8] },
-    黒魔道士: { maxHp: [0, 0], maxMp: [7, 12] },
-    白魔道士: { maxHp: [0, 0], maxMp: [6, 10] },
-};
 // ゲームのテンポのために初期レベル帯のエネミーの経験値は高く設定
 let ENEMY_LIST = [
 // {name: 'スライム', level: 1, hp: 30, mp: 0, exp: 50, maxHp: 80, maxMp: 0, str: 12, int: 2},
@@ -904,6 +917,27 @@ const SPELLS = {
 
 
 };
+
+// SPELLS_TEST それぞれのSPELLのテストをするためのステータスと操作の実行をまとめたコード
+// tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+// であればtradeHpMp_TESTというオブジェクトを作り、全部大文字と_の定数の数値を変更して設定を適用してエネミーとヒーローのステータスの変更を測定する
+const SPELLS_TEST = {
+    tradeHpMp_TEST: { test: (test_fn=tradeHpMp, target, source) => {
+        const target_hp = 10;
+        const target_mp = 20;
+        test_fn(target, source);
+        const target_hp_after = target.hp;
+        const target_mp_after = target.mp;
+        if (target_hp_after === target_mp && target_mp_after === target_hp) {
+            console.log(`テスト成功: ${target.name}のHP(${target_hp})とMP(${target_mp})が入れ替わった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}のHP(${target_hp_after})とMP(${target_mp_after})が入れ替わらなかった!!`);
+        }
+    }},
+};
+    
+
+
 
 const ULT_SPELLS = {
     kuro: { name: '黒', cost: 6, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 黒魔道士: 1 } },
