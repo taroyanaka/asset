@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-2
+5
 <html lang="ja">
 <script>
 // let test = true; // テストモードのフラグ
@@ -67,7 +67,8 @@ const test = false;
 
     <!-- テストモード用設定UI -->
 <div id="test-settings">
-    <h3>テスト用設定</h3>
+    <!-- exe_test tradeHpMp_TEST -->
+    <button id="btn-test" onclick="tradeHpMp_TEST_prepara_and_exe()">テスト実行</button>
 
 <!-- JOBS -->
 <!-- JOB_GROWTH -->
@@ -143,21 +144,18 @@ let JOB_GROWTH = {
 
 let HP_MULTIPLIER = test ? 0.1 : 1; // HP倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
 let EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
-let INITIAL_HEROES_VOLUME = 1; // 初期ヒーローの数
+let INITIAL_HEROES_VOLUME = 3; // 初期ヒーローの数
 // 初期のヒーローの名前と職業を決めるテーブル
 let INITIAL_HEROES = [
-    // ['サトウ', '戦士'],
+    ['サトウ', '戦士'],
     ['スズキ', '魔法使い'],
     ['タナカ', '僧侶'],
 ];
 
-INITIAL_HEROES = INITIAL_HEROES.slice(0, INITIAL_HEROES_VOLUME); // 初期ヒーローの数だけスライス
 
 let ENEMY_MORE_VOLUME = 3; // 敵の出現数の増加数
 let ENEMY_ARRAY_VOLUME = 3; // 敵の出現数の配列
 let ENEMY_VOLUME_ARRAY = [1];
-// ENEMY_MORE_VOLUMEが3でENEMY_ARRAY_VOLUMEが3ならENEMY_VOLUME_ARRAYは[1, 4, 7]になる
-ENEMY_VOLUME_ARRAY = Array.from({ length: ENEMY_ARRAY_VOLUME }, (_, i) => (i + 1) * ENEMY_MORE_VOLUME + 1);
 
 let MAX_HEROES = 7; // 最大ヒーロー数
 let VOLUME_DROPS = 1; // 敵2体でVOLUME_DROPSが1ならdrop数は2
@@ -214,6 +212,9 @@ let heroes = [];
 let enemies = [];
 
 function initializeGame() {
+    INITIAL_HEROES = INITIAL_HEROES.slice(0, INITIAL_HEROES_VOLUME); // 初期ヒーローの数だけスライス
+    // ENEMY_MORE_VOLUMEが3でENEMY_ARRAY_VOLUMEが3ならENEMY_VOLUME_ARRAYは[1, 4, 7]になる
+    ENEMY_VOLUME_ARRAY = Array.from({ length: ENEMY_ARRAY_VOLUME }, (_, i) => (i + 1) * ENEMY_MORE_VOLUME + 1);
     ENEMY_LIST = ENEMY_LIST.map(e => test ? { ...e, hp: Math.floor(e.hp * HP_MULTIPLIER), exp: Math.floor(e.exp * EXP_MULTIPLIER) } : e);
     heroes = INITIAL_HEROES.map((hero) => {
         const [name, job] = hero;
@@ -221,7 +222,7 @@ function initializeGame() {
     });
     enemies = [];
 }
-initializeGame();
+
 
 
 
@@ -921,11 +922,14 @@ const SPELLS = {
 // SPELLS_TEST それぞれのSPELLのテストをするためのステータスと操作の実行をまとめたコード
 // tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
 // であればtradeHpMp_TESTというオブジェクトを作り、全部大文字と_の定数の数値を変更して設定を適用してエネミーとヒーローのステータスの変更を測定する
-const SPELLS_TEST = {
-    tradeHpMp_TEST: { test: (test_fn=tradeHpMp, target, source) => {
-        const target_hp = 10;
-        const target_mp = 20;
-        test_fn(target, source);
+    
+function tradeHpMp_TEST_prepara_and_exe(){
+    const tradeHpMp_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeHpMp_TEST(test_fn, target, source) {
+        // source不要
+        const target_mp = JSON.parse(JSON.stringify(target.mp));
+        const target_hp = JSON.parse(JSON.stringify(target.hp));
+        test_fn.effect(target, source);
         const target_hp_after = target.hp;
         const target_mp_after = target.mp;
         if (target_hp_after === target_mp && target_mp_after === target_hp) {
@@ -933,9 +937,16 @@ const SPELLS_TEST = {
         } else {
             console.log(`テスト失敗: ${target.name}のHP(${target_hp_after})とMP(${target_mp_after})が入れ替わらなかった!!`);
         }
-    }},
+    };
+    tradeHpMp_TEST_prepara();
+    tradeHpMp_TEST(SPELLS.tradeHpMp, heroes[1], heroes[1]);
+    updateStats();
+}
+// SPELLS_TESTに格納してまとめて増えたら一気に実行する
+const SPELLS_TEST = {
+    tradeHpMp_TEST_prepara_and_exe,
 };
-    
+
 
 
 
@@ -1038,6 +1049,7 @@ function showAccessorySelection(droppedAccessories) {
 
 // 戦闘開始時に全キャラクターのアクセサリ効果を適用
 function startBattle(enemyCount = 2) {
+    initializeGame();
     const clearLog = () => log.innerHTML = ''; // ログをクリアする関数
     clearLog();
     spawnEnemies(enemyCount);
