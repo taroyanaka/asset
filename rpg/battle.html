@@ -68,7 +68,28 @@ const test = false;
     <!-- テストモード用設定UI -->
 <div id="test-settings">
     <!-- exe_test tradeHpMp_TEST -->
-    <button id="btn-test" onclick="tradeHpMp_TEST_prepara_and_exe()">テスト実行</button>
+<button id="btn-test" onclick="tradeHpMp_TEST_prepara_and_exe()">tradeHpMp_TEST(done)</button>
+<button id="btn-test" onclick="tradeHpMpAll_TEST_prepara_and_exe()">tradeHpMpAll_TEST(done)</button>
+<button id="btn-test" onclick="tradeMp_TEST_prepara_and_exe()">tradeMp_TEST(done)</button>
+<button id="btn-test" onclick="tradeMaxMp_TEST_prepara_and_exe()">tradeMaxMp_TEST</button>
+<button id="btn-test" onclick="tradeMpAll_TEST_prepara_and_exe()">tradeMpAll_TEST</button>
+<button id="btn-test" onclick="tradeMaxMpAll_TEST_prepara_and_exe()">tradeMaxMpAll_TEST</button>
+<button id="btn-test" onclick="tradeMpByStr_TEST_prepara_and_exe()">tradeMpByStr_TEST</button>
+<button id="btn-test" onclick="tradeMaxMpByStr_TEST_prepara_and_exe()">tradeMaxMpByStr_TEST</button>
+<button id="btn-test" onclick="tradeMpAllByStr_TEST_prepara_and_exe()">tradeMpAllByStr_TEST</button>
+<button id="btn-test" onclick="buffStrByEnemyCount_TEST_prepara_and_exe()">buffStrByEnemyCount_TEST</button>
+<button id="btn-test" onclick="buffStrByEnemyCount2_TEST_prepara_and_exe()">buffStrByEnemyCount2_TEST</button>
+<button id="btn-test" onclick="buffStrByAllCount_TEST_prepara_and_exe()">buffStrByAllCount_TEST</button>
+<button id="btn-test" onclick="buffStrByAllCount2_TEST_prepara_and_exe()">buffStrByAllCount2_TEST</button>
+<button id="btn-test" onclick="buffStrByAllCount2_TEST_prepara_and_exe()">buffStrByAllCount2_TEST</button>
+<button id="btn-test" onclick="buffStrByAllCount3_TEST_prepara_and_exe()">buffStrByAllCount3_TEST</button>
+<button id="btn-test" onclick="buffStrByItemCount_TEST_prepara_and_exe()">buffStrByItemCount_TEST</button>
+<button id="btn-test" onclick="buffStrByItemCount2_TEST_prepara_and_exe()">buffStrByItemCount2_TEST</button>
+<button id="btn-test" onclick="buffStrByBattleCount_TEST_prepara_and_exe()">buffStrByBattleCount_TEST</button>
+<button id="btn-test" onclick="buffStrByBattleCount2_TEST_prepara_and_exe()">buffStrByBattleCount2_TEST</button>
+<button id="btn-test" onclick="buffStrByBattleCount3_TEST_prepara_and_exe()">buffStrByBattleCount3_TEST</button>
+<button id="btn-test" onclick="buffStrByBattleCount4_TEST_prepara_and_exe()">buffStrByBattleCount4_TEST</button>
+
 
 <!-- JOBS -->
 <!-- JOB_GROWTH -->
@@ -147,7 +168,7 @@ let EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhp�
 let INITIAL_HEROES_VOLUME = 3; // 初期ヒーローの数
 // 初期のヒーローの名前と職業を決めるテーブル
 let INITIAL_HEROES = [
-    ['サトウ', '戦士'],
+    // ['サトウ', '戦士'],
     ['スズキ', '魔法使い'],
     ['タナカ', '僧侶'],
 ];
@@ -272,12 +293,24 @@ const SPELLS = {
         // 追加の特殊スペル(未テスト)
     tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
 
-    // 味方全員のHPとMPを入れ替えるスペル
-    tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
+// 味方全員のHPとMPを入れ替えるスペル
+    tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+    effect: (target, source) => {
+        // 味方全員のHPとMPを入れ替えるスペル
+        // target.forEach(hero => {
+        heroes.forEach(hero => {
+            const tempHp = hero.hp;
+            hero.hp = hero.mp;
+            hero.mp = tempHp;
+            logWrite(`${hero.name}のHPとMPが入れ替わった!!`);
+        });
+    } },
 
     // 敵単体のMPを自分のMPと入れ替えるスペル
     tradeMp: { name: 'MP変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-        const tempMp = target.mp;target.mp = source.mp;source.mp = tempMp;logWrite(`${source.name}は${target.name}のMPと入れ替えた!!`) } },
+        console.log(target, source);
+        const tempMp = target.mp;target.mp = source.mp;source.mp = tempMp;
+        logWrite(`${source.name}は${target.name}のMPと入れ替えた!!`) } },
     // 敵単体の最大MPを自分のMPと入れ替えるスペル
     tradeMaxMp: { name: '最大MP変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const tempMp = target.maxMp;target.maxMp = source.mp;source.mp = tempMp;logWrite(`${source.name}は${target.name}の最大MPと入れ替えた!!`) } },
@@ -557,7 +590,7 @@ const SPELLS = {
         }
     },
     // 敵全体の最大MPの平均数値を自分のbuffs.strにするスペル
-    buffStrByAvgAllEnemiesMaxMp: { name: '敵全員最大MP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
+    buffStrByAvgAllEnemiesMaxMp: { name: '敵全員最大u@ 456hgfdMP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
         effect: (target, source) => {
             const avgMaxMp = Math.floor(enemies.reduce((sum, e) => sum + e.maxMp, 0) / enemies.length);
             source.buffs.str += avgMaxMp;
@@ -942,6 +975,446 @@ function tradeHpMp_TEST_prepara_and_exe(){
     tradeHpMp_TEST(SPELLS.tradeHpMp, heroes[1], heroes[1]);
     updateStats();
 }
+
+tradeHpMpAll_TEST_prepara_and_exe = () => {
+    const tradeHpMpAll_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeHpMpAll_TEST(test_fn) {
+        // heroes[0]のHPとMPを保存
+        const target_mp_before = JSON.parse(JSON.stringify(heroes[0].mp));
+        const target_hp_before = JSON.parse(JSON.stringify(heroes[0].hp));
+        // heroes[1]のHPとMPを保存
+        const target_mp2_before = JSON.parse(JSON.stringify(heroes[1].mp));
+        const target_hp2_before = JSON.parse(JSON.stringify(heroes[1].hp));
+        // effectを実行
+        test_fn.effect(heroes[0], heroes[1]);
+        // 全員のHPとMPを確認して、入れ替わっているかを確認
+        const target_hp_after = heroes[0].hp;
+        const target_mp_after = heroes[0].mp;
+        const target_hp2_after = heroes[1].hp;
+        const target_mp2_after = heroes[1].mp;
+        // target_mp_beforeとtarget_hp_afterが入れ替わっているかを確認
+        // target_mp2_beforeとtarget_hp2_afterが入れ替わっているかを確認
+        if (target_hp_after === target_mp_before && target_mp_after === target_hp_before &&
+            target_hp2_after === target_mp2_before && target_mp2_after === target_hp2_before) {
+            console.log(`テスト成功: ${heroes[0].name}のHP(${target_hp_before})とMP(${target_mp_before})が入れ替わり、${heroes[1].name}のHP(${target_hp2_before})とMP(${target_mp2_before})が入れ替わった!!`);
+        } else {
+            console.log(`テスト失敗: ${heroes[0].name}のHP(${target_hp_after})とMP(${target_mp_after})が入れ替わらなかった!!`);
+            console.log(`テスト失敗: ${heroes[1].name}のHP(${target_hp2_after})とMP(${target_mp2_after})が入れ替わらなかった!!`);
+        }
+    }
+    tradeHpMpAll_TEST_prepara();
+    tradeHpMpAll_TEST(SPELLS.tradeHpMpAll);
+    updateStats();
+};
+
+tradeMp_TEST_prepara_and_exe = () => {
+    const tradeMp_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;
+        startBattle()};
+    function tradeMp_TEST(test_fn, target, source) {
+        const target_mp = JSON.parse(JSON.stringify(target.mp));
+        const source_mp = JSON.parse(JSON.stringify(source.mp));
+
+        test_fn.effect(target, source);
+        const target_mp_after = target.mp;
+        const source_mp_after = source.mp;
+        if ( target_mp_after === source_mp && source_mp_after === target_mp) {
+            console.log(`テスト成功: ${target.name}のMP(${target_mp})と${source.name}のMP(${source_mp})が入れ替わった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}のMP(${target_mp_after})が0にならなかった!!`);
+        }
+    };
+    tradeMp_TEST_prepara();
+    tradeMp_TEST(SPELLS.tradeMp, enemies[0], heroes[0]);
+    updateStats();updateEnemies();
+};
+tradeMaxMp_TEST_prepara_and_exe = () => {
+    const tradeMaxMp_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeMaxMp_TEST(test_fn, target, source) {
+        // source不要
+        const target_max_mp = JSON.parse(JSON.stringify(target.maxMp));
+        test_fn.effect(target, source);
+        const target_max_mp_after = target.maxMp;
+        if (target_max_mp_after === 0) {
+            console.log(`テスト成功: ${target.name}の最大MP(${target_max_mp})が0になった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の最大MP(${target_max_mp_after})が0にならなかった!!`);
+        }
+    };
+    tradeMaxMp_TEST_prepara();
+    tradeMaxMp_TEST(SPELLS.tradeMaxMp, heroes[1], heroes[1]);
+    updateStats();
+};
+tradeMpAll_TEST_prepara_and_exe = () => {
+    const tradeMpAll_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeMpAll_TEST(test_fn, target, source) {
+        // source不要
+        const target_mp = JSON.parse(JSON.stringify(target.mp));
+        test_fn.effect(target, source);
+        const target_mp_after = target.mp;
+        if (target_mp_after === 0) {
+            console.log(`テスト成功: ${target.name}のMP(${target_mp})が0になった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}のMP(${target_mp_after})が0にならなかった!!`);
+        }
+    };
+    tradeMpAll_TEST_prepara();
+    tradeMpAll_TEST(SPELLS.tradeMp, heroes[0], heroes[0]);
+    updateStats();
+};
+tradeMaxMpAll_TEST_prepara_and_exe = () => {
+    const tradeMaxMpAll_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeMaxMpAll_TEST(test_fn, target, source) {
+        // source不要
+        const target_max_mp = JSON.parse(JSON.stringify(target.maxMp));
+        test_fn.effect(target, source);
+        const target_max_mp_after = target.maxMp;
+        if (target_max_mp_after === 0) {
+            console.log(`テスト成功: ${target.name}の最大MP(${target_max_mp})が0になった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の最大MP(${target_max_mp_after})が0にならなかった!!`);
+        }
+    };
+    tradeMaxMpAll_TEST_prepara();
+    tradeMaxMpAll_TEST(SPELLS.tradeMaxMp, heroes[0], heroes[0]);
+    updateStats();
+};
+tradeMpByStr_TEST_prepara_and_exe = () => {
+    const tradeMpByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeMpByStr_TEST(test_fn, target, source) {
+        // source不要
+        const target_mp = JSON.parse(JSON.stringify(target.mp));
+        test_fn.effect(target, source);
+        const target_mp_after = target.mp;
+        if (target_mp_after === 0) {
+            console.log(`テスト成功: ${target.name}のMP(${target_mp})が0になった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}のMP(${target_mp_after})が0にならなかった!!`);
+        }
+    };
+    tradeMpByStr_TEST_prepara();
+    tradeMpByStr_TEST(SPELLS.tradeMpByStr, heroes[1], heroes[1]);
+    updateStats();
+};
+tradeMaxMpByStr_TEST_prepara_and_exe = () => {
+    const tradeMaxMpByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeMaxMpByStr_TEST(test_fn, target, source) {
+        // source不要
+        const target_max_mp = JSON.parse(JSON.stringify(target.maxMp));
+        test_fn.effect(target, source);
+        const target_max_mp_after = target.maxMp;
+        if (target_max_mp_after === 0) {
+            console.log(`テスト成功: ${target.name}の最大MP(${target_max_mp})が0になった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の最大MP(${target_max_mp_after})が0にならなかった!!`);
+        }
+    };
+    tradeMaxMpByStr_TEST_prepara();
+    tradeMaxMpByStr_TEST(SPELLS.tradeMaxMpByStr, heroes[1], heroes[1]);
+    updateStats();
+};
+tradeMpAllByStr_TEST_prepara_and_exe = () => {
+    const tradeMpAllByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeMpAllByStr_TEST(test_fn, target, source) {
+        // source不要
+        const target_mp = JSON.parse(JSON.stringify(target.mp));
+        test_fn.effect(target, source);
+        const target_mp_after = target.mp;
+        if (target_mp_after === 0) {
+            console.log(`テスト成功: ${target.name}のMP(${target_mp})が0になった!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}のMP(${target_mp_after})が0にならなかった!!`);
+        }
+    };
+    tradeMpAllByStr_TEST_prepara();
+    tradeMpAllByStr_TEST(SPELLS.tradeMpByStr, heroes[0], heroes[0]);
+    updateStats();
+};
+buffStrByEnemyCount_TEST_prepara_and_exe = () => {
+    const buffStrByEnemyCount_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByEnemyCount_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + enemies.length) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})が敵の数(${enemies.length})分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})が敵の数(${enemies.length})分増加しなかった!!`);
+        }
+    };
+    buffStrByEnemyCount_TEST_prepara();
+    buffStrByEnemyCount_TEST(SPELLS.buffStrByEnemyCount, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByEnemyCount2_TEST_prepara_and_exe = () => {
+    const buffStrByEnemyCount2_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByEnemyCount2_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + enemies.length * 2) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})が敵の数(${enemies.length})の2倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})が敵の数(${enemies.length})の2倍分増加しなかった!!`);
+        }
+    };
+    buffStrByEnemyCount2_TEST_prepara();
+    buffStrByEnemyCount2_TEST(SPELLS.buffStrByEnemyCount2, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByAllCount_TEST_prepara_and_exe = () => {
+    const buffStrByAllCount_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByAllCount_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + enemies.length + heroes.length) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})が敵と味方の数(${enemies.length + heroes.length})分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})が敵と味方の数(${enemies.length + heroes.length})分増加しなかった!!`);
+        }
+    };
+    buffStrByAllCount_TEST_prepara();
+    buffStrByAllCount_TEST(SPELLS.buffStrByAllCount, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByAllCount2_TEST_prepara_and_exe = () => {
+    const buffStrByAllCount2_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByAllCount2_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + (enemies.length + heroes.length) * 2) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})が敵と味方の数(${enemies.length + heroes.length})の2倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})が敵と味方の数(${enemies.length + heroes.length})の2倍分増加しなかった!!`);
+        }
+    };
+    buffStrByAllCount2_TEST_prepara();
+    buffStrByAllCount2_TEST(SPELLS.buffStrByAllCount2, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByAllCount2_TEST_prepara_and_exe = () => {
+    const buffStrByAllCount2_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByAllCount2_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + (enemies.length + heroes.length) * 3) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})が敵と味方の数(${enemies.length + heroes.length})の3倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})が敵と味方の数(${enemies.length + heroes.length})の3倍分増加しなかった!!`);
+        }
+    };
+    buffStrByAllCount2_TEST_prepara();
+    buffStrByAllCount2_TEST(SPELLS.buffStrByAllCount3, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByAllCount3_TEST_prepara_and_exe = () => {
+    const buffStrByAllCount3_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByAllCount3_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + (enemies.length + heroes.length) * 4) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})が敵と味方の数(${enemies.length + heroes.length})の4倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})が敵と味方の数(${enemies.length + heroes.length})の4倍分増加しなかった!!`);
+        }
+    };
+    buffStrByAllCount3_TEST_prepara();
+    buffStrByAllCount3_TEST(SPELLS.buffStrByAllCount4, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByItemCount_TEST_prepara_and_exe = () => {
+    const buffStrByItemCount_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByItemCount_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + items.length) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})がアイテムの数(${items.length})分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})がアイテムの数(${items.length})分増加しなかった!!`);
+        }
+    };
+    buffStrByItemCount_TEST_prepara();
+    buffStrByItemCount_TEST(SPELLS.buffStrByItemCount, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByItemCount2_TEST_prepara_and_exe = () => {
+    const buffStrByItemCount2_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByItemCount2_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + items.length * 2) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})がアイテムの数(${items.length})の2倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})がアイテムの数(${items.length})の2倍分増加しなかった!!`);
+        }
+    };
+    buffStrByItemCount2_TEST_prepara();
+    buffStrByItemCount2_TEST(SPELLS.buffStrByItemCount2, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByBattleCount_TEST_prepara_and_exe = () => {
+    const buffStrByBattleCount_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByBattleCount_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + battleCount) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})がバトルの回数(${battleCount})分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})がバトルの回数(${battleCount})分増加しなかった!!`);
+        }
+    };
+    buffStrByBattleCount_TEST_prepara();
+    buffStrByBattleCount_TEST(SPELLS.buffStrByBattleCount, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByBattleCount2_TEST_prepara_and_exe = () => {
+    const buffStrByBattleCount2_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByBattleCount2_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + battleCount * 2) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})がバトルの回数(${battleCount})の2倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})がバトルの回数(${battleCount})の2倍分増加しなかった!!`);
+        }
+    };
+    buffStrByBattleCount2_TEST_prepara();
+    buffStrByBattleCount2_TEST(SPELLS.buffStrByBattleCount2, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByBattleCount3_TEST_prepara_and_exe = () => {
+    const buffStrByBattleCount3_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByBattleCount3_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + battleCount * 3) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})がバトルの回数(${battleCount})の3倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})がバトルの回数(${battleCount})の3倍分増加しなかった!!`);
+        }
+    };
+    buffStrByBattleCount3_TEST_prepara();
+    buffStrByBattleCount3_TEST(SPELLS.buffStrByBattleCount3, heroes[1], heroes[1]);
+    updateStats();
+};
+buffStrByBattleCount4_TEST_prepara_and_exe = () => {
+    const buffStrByBattleCount4_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function buffStrByBattleCount4_TEST(test_fn, target, source) {
+        // source不要
+        const target_str = JSON.parse(JSON.stringify(target.str));
+        test_fn.effect(target, source);
+        const target_str_after = target.str;
+        if (target_str_after === target_str + battleCount * 4) {
+            console.log(`テスト成功: ${target.name}の攻撃力(${target_str})がバトルの回数(${battleCount})の4倍分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${target.name}の攻撃力(${target_str_after})がバトルの回数(${battleCount})の4倍分増加しなかった!!`);
+        }
+    };
+    buffStrByBattleCount4_TEST_prepara();
+    buffStrByBattleCount4_TEST(SPELLS.buffStrByBattleCount4, heroes[1], heroes[1]);
+    updateStats();
+};
+// tradeEnemyRandom_TEST_prepara_and_exe
+// tradeEnemyAllRandom_TEST_prepara_and_exe
+// tradeEnemyBuffStr_TEST_prepara_and_exe
+// tradeEnemyBuffStrAll_TEST_prepara_and_exe
+// tradeEnemyBuffStrAll2_TEST_prepara_and_exe
+// buffStrByAvgAllMaxHp_TEST_prepara_and_exe
+// buffStrByAvgAllMaxHp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllMaxHp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllMaxHp2_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesMaxHp_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesMaxHp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesMaxHp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesMaxHp2_TEST_prepara_and_exe
+// buffStrByAvgAllHp_TEST_prepara_and_exe
+// buffStrByAvgAllHp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllHp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllHp2_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesHp_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesHp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesHp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesHp2_TEST_prepara_and_exe
+// buffStrByAvgAllMaxMp_TEST_prepara_and_exe
+// buffStrByAvgAllMaxMp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllMaxMp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllMaxMp2_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesMaxMp_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesMaxMp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesMaxMp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesMaxMp2_TEST_prepara_and_exe
+// buffStrByAvgAllMp_TEST_prepara_and_exe
+// buffStrByAvgAllMp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllMp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllMp2_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesMp_TEST_prepara_and_exe
+// buffStrByAvgAllEnemiesMp2_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesMp_TEST_prepara_and_exe
+// buffEnemyHpByAvgAllEnemiesMp2_TEST_prepara_and_exe
+// tradeEnemy_TEST_prepara_and_exe
+// copyEnemySpell_TEST_prepara_and_exe
+// buffStrByLevel_TEST_prepara_and_exe
+// buffStrByMaxHp_TEST_prepara_and_exe
+// buffStrByMaxMp_TEST_prepara_and_exe
+// buffStrByHp_TEST_prepara_and_exe
+// buffStrByMp_TEST_prepara_and_exe
+// buffStrByAllMaxHp_TEST_prepara_and_exe
+// buffStrByAllMaxMp_TEST_prepara_and_exe
+// buffStrDouble_TEST_prepara_and_exe
+// buffStrDoubleAll_TEST_prepara_and_exe
+// buffStrTenTimes_TEST_prepara_and_exe
+// buffStrTenTimesAll_TEST_prepara_and_exe
+// buffStrByExp_TEST_prepara_and_exe
+// dmgByExp_TEST_prepara_and_exe
+// dmgByAllExp_TEST_prepara_and_exe
+// dmgByAllExpSingle_TEST_prepara_and_exe
+// dmgByAllExpAll_TEST_prepara_and_exe
+// dmgByBuffStrMaxMp_TEST_prepara_and_exe
+// dmgByBuffStrMaxMpAll_TEST_prepara_and_exe
+// dmgByBuffStrMaxHp_TEST_prepara_and_exe
+// dmgByBuffStrMaxHpAll_TEST_prepara_and_exe
+// dealMaxMpDmg_TEST_prepara_and_exe
+// dealMaxDoubleMpDmg_TEST_prepara_and_exe
+// dealMpDmg_TEST_prepara_and_exe
+// dealDoubleMpDmg_TEST_prepara_and_exe
+// dealMaxMpDmgAll_TEST_prepara_and_exe
+// dealQuarterMaxHpDmg_TEST_prepara_and_exe
+// dealHalfMaxHpDmg_TEST_prepara_and_exe
+// dealMaxHpDmg_TEST_prepara_and_exe
+// dealQuarterMaxHpDmgAll_TEST_prepara_and_exe
+// dealHalfMaxHpDmgAll_TEST_prepara_and_exe
+// dealSingleDmgAll_TEST_prepara_and_exe
+// dealAllDmgAll_TEST_prepara_and_exe
+// dealSingleDmgHeroes_TEST_prepara_and_exe
+// dealAllDmgHeroes_TEST_prepara_and_exe
+// drainMp_TEST_prepara_and_exe
+// tsuyoiItami_TEST_prepara_and_exe
+// summonSameMonster_TEST_prepara_and_exe
+// summonRandomMonster_TEST_prepara_and_exe
+// summonNormalMonster_TEST_prepara_and_exe
+// summonAllies_TEST_prepara_and_exe
+
+
+
 // SPELLS_TESTに格納してまとめて増えたら一気に実行する
 const SPELLS_TEST = {
     tradeHpMp_TEST_prepara_and_exe,
@@ -1585,6 +2058,7 @@ function castSpell(hero, spell, target) {
 
     // effectプロパティがあれば必ずそれを実行し、他の処理は行わない
     if (sp.type === 'other') {
+        console.log(target, hero);
         (typeof sp.effect === 'function') ? sp.effect(target, hero) : logWrite(`${spell}の効果を実行できませんでした。`);
         return;
     }
