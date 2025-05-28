@@ -79,15 +79,14 @@ const test = false;
 
 
 
-<button id="btn-test" onclick="tradeMpByStr_TEST_prepara_and_exe()">tradeMpByStr_TEST</button>
-<button id="btn-test" onclick="tradeMaxMpByStr_TEST_prepara_and_exe()">tradeMaxMpByStr_TEST</butto>
+<button id="btn-test" onclick="tradeMpByStr_TEST_prepara_and_exe()">tradeMpByStr_TEST(done)</button>
+<button id="btn-test" onclick="tradeMaxMpByStr_TEST_prepara_and_exe()">tradeMaxMpByStr_TEST(done)</button>
 
 
-<button id="btn-test" onclick="tradeMpAllByStr_TEST_prepara_and_exe()">tradeMpAllByStr_TEST</button>
-<button id="btn-test" onclick="buffStrByEnemyCount_TEST_prepara_and_exe()">buffStrByEnemyCount_TEST</button>
-<button id="btn-test" onclick="buffStrByEnemyCount2_TEST_prepara_and_exe()">buffStrByEnemyCount2_TEST</button>
+<button id="btn-test" onclick="tradeMpAllByStr_TEST_prepara_and_exe()">tradeMpAllByStr_TEST(done)</button>
+<button id="btn-test" onclick="buffStrByEnemyCount_TEST_prepara_and_exe()">buffStrByEnemyCount_TEST(done)</button>
+<button id="btn-test" onclick="buffStrByEnemyCount2_TEST_prepara_and_exe()">buffStrByEnemyCount2_TEST(done)</button>
 <button id="btn-test" onclick="buffStrByAllCount_TEST_prepara_and_exe()">buffStrByAllCount_TEST</button>
-<button id="btn-test" onclick="buffStrByAllCount2_TEST_prepara_and_exe()">buffStrByAllCount2_TEST</button>
 <button id="btn-test" onclick="buffStrByAllCount2_TEST_prepara_and_exe()">buffStrByAllCount2_TEST</button>
 <button id="btn-test" onclick="buffStrByAllCount3_TEST_prepara_and_exe()">buffStrByAllCount3_TEST</button>
 <button id="btn-test" onclick="buffStrByItemCount_TEST_prepara_and_exe()">buffStrByItemCount_TEST</button>
@@ -338,25 +337,28 @@ const SPELLS = {
         const tempMp = target.maxMp;target.maxMp = source.buffs.str;source.buffs.str = tempMp;logWrite(`${source.name}は${target.name}の最大MPとバフを入れ替えた!!`) } },
     // 敵全体のMPの累計を自分のbuffs.strにするスペル
     tradeMpAllByStr: { name: '全員MP変換(バフ)', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-        const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.buffs.str += totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分吸収した!!`) } },
+        const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.buffs.str = totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分にした!!`) } },
 
     // 敵全体の数だけ自分のbuffs.strを上昇するスペル
     buffStrByEnemyCount: { name: '敵の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は${target.map(e => e.name).join(',')}の数(${buffAmount})分のバフをかけた!!`) } },
     // 敵全体の数だけ味方全員のbuffs.strを上昇するスペル
     buffStrByEnemyCount2: { name: '敵の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-        const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+        const buffAmount = enemies.length
+        for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}
+        logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
     // 味方全体の数だけ自分のbuffs.strを上昇するスペル
     buffStrByAllCount: { name: '全員の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-        const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+        const buffAmount = heroes.length; // 味方全体の数を取得
+        source.buffs.str += buffAmount;logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
     // 味方全体の数だけ味方全員のbuffs.strを上昇するスペル
     buffStrByAllCount2: { name: '全員の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
     // 敵と味方の全体の合計数だけ自分のbuffs.strを上昇するスペル
-    buffStrByAllCount2: { name: '全員の数分Strバフ(敵味方)', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    buffStrByAllCount3: { name: '全員の数分Strバフ(敵味方)', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buffAmount = target.length + enemies.length;source.buffs.str += buffAmount;logWrite(`${source.name}は敵と味方全員の数(${buffAmount})分のバフをかけた!!`) } },
     // 敵と味方の全体の合計数だけ味方全員のbuffs.strを上昇するスペル
-    buffStrByAllCount3: { name: '全員の数分全員Strバフ(敵味方)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    buffStrByAllCount4: { name: '全員の数分全員Strバフ(敵味方)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buffAmount = target.length + enemies.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は敵と味方全員の数(${buffAmount})分のバフをかけた!!`) } },
 
     // 所持するアイテムの数だけ単体の味方のbuffs.strを上昇するスペル
@@ -1165,9 +1167,9 @@ tradeMpByStr_TEST_prepara_and_exe = () => {
 
 };
 tradeMaxMpByStr_TEST_prepara_and_exe = () => {
-        // 敵単体のMPを自分のbuffs.strにするスペル
-    // tradeMpByStr: { name: 'MP変換(バフ)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {
-    //     const tempMp = target.mp;target.mp = source.buffs.str;source.buffs.str = tempMp;logWrite(`${source.name}は${target.name}のMPとバフを入れ替えた!!`) } },
+        // 敵単体の最大MPを自分のbuffs.strにするスペル
+    // tradeMaxMpByStr: { name: '最大MP変換(バフ)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    //     const tempMp = target.maxMp;target.maxMp = source.buffs.str;source.buffs.str = tempMp;logWrite(`${source.name}は${target.name}の最大MPとバフを入れ替えた!!`) } },
     const tradeMaxMpByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
     function tradeMaxMpByStr_TEST(test_fn, target, source) {
         const target_max_mp = JSON.parse(JSON.stringify(target.maxMp));
@@ -1180,8 +1182,6 @@ tradeMaxMpByStr_TEST_prepara_and_exe = () => {
         } else {
             console.log(`テスト失敗: ${target.name}の最大MP(${target_max_mp_after})と${source.name}のバフSTR(${source_str_after})が入れ替わらなかった!!`);
         }
-
-
     };
     tradeMaxMpByStr_TEST_prepara();
     tradeMaxMpByStr_TEST(SPELLS.tradeMaxMpByStr, enemies[0], heroes[0]);
@@ -1189,24 +1189,94 @@ tradeMaxMpByStr_TEST_prepara_and_exe = () => {
 
 };
 tradeMpAllByStr_TEST_prepara_and_exe = () => {
+    // 敵全体のMPの累計を自分のbuffs.strにするスペル
+    // tradeMpAllByStr: { name: '全員MP変換(バフ)', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    //     const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.buffs.str += totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分吸収した!!`) } },
+    const tradeMpAllByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
+    function tradeMpAllByStr_TEST(test_fn, target, source) {
+        const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);
+        test_fn.effect(target, source);
+        const source_str_after = source.buffs.str;
+        if (source_str_after === totalMp) {
+            console.log(`テスト成功: ${source.name}のバフSTRが敵全体のMP合計(${totalMp})になった!!`);
+        } else {
+            console.log(`テスト失敗: ${source.name}のバフSTR(${source_str_after})が敵全体のMP合計(${totalMp})になった!!`);
+        }
+    };
+    tradeMpAllByStr_TEST_prepara();
+    tradeMpAllByStr_TEST(SPELLS.tradeMpAllByStr, enemies, heroes[0]);
+    updateStats();updateEnemies();
 
 };
 buffStrByEnemyCount_TEST_prepara_and_exe = () => {
+    // 敵全体の数だけ自分のbuffs.strを上昇するスペル
+    // buffStrByEnemyCount: { name: '敵の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    //     const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は${target.map(e => e.name).join(',')}の数(${buffAmount})分のバフをかけた!!`) } },
+    const buffStrByEnemyCount_TEST_prepara = () => { INITIAL_HEROES_VOLUME = 2; startBattle(); };
+    function buffStrByEnemyCount_TEST(test_fn, target, source) {
+        const source_str_before = source.buffs.str;
+        const enemy_count = target.length;
+        test_fn.effect(target, source);
+        const source_str_after = source.buffs.str;
+        if (source_str_after === source_str_before + enemy_count) {
+            console.log(`テスト成功: ${source.name}のバフSTRが敵の数(${enemy_count})分増加した!!`);
+        } else {
+            console.log(`テスト失敗: ${source.name}のバフSTR(${source_str_after})が敵の数(${enemy_count})分増加しなかった!!`);
+        }
+    }
+    buffStrByEnemyCount_TEST_prepara();
+    buffStrByEnemyCount_TEST(SPELLS.buffStrByEnemyCount, enemies, heroes[0]);
+    updateStats();
+    updateEnemies();
+
+
+
 
 };
 buffStrByEnemyCount2_TEST_prepara_and_exe = () => {
+        // 敵全体の数だけ味方全員のbuffs.strを上昇するスペル
+    // buffStrByEnemyCount2: { name: '敵の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    //     const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
+    const buffStrByEnemyCount2_TEST_prepara = () => { INITIAL_HEROES_VOLUME = 2; startBattle(); };
+    function buffStrByEnemyCount2_TEST(test_fn, target, source) {
+        const enemy_count = enemies.length;
+        const buffAmount = enemy_count;
+        for (let i = 0; i < heroes.length; i++) {
+            const hero = heroes[i];
+            const hero_str_before = hero.buffs.str;
+            test_fn.effect(target, hero);
+            const hero_str_after = hero.buffs.str;
+            if (hero_str_after === hero_str_before + buffAmount) {
+                console.log(`テスト成功: ${hero.name}のバフSTRが敵の数(${enemy_count})分増加した!!`);
+            } else {
+                console.log(`テスト失敗: ${hero.name}のバフSTR(${hero_str_after})が敵の数(${enemy_count})分増加しなかった!!`);
+            }
+        }
+    }
+    buffStrByEnemyCount2_TEST_prepara();
+    // buffStrByEnemyCount2_TEST(SPELLS.buffStrByEnemyCount2, enemies, heroes[0]);
+    buffStrByEnemyCount2_TEST(SPELLS.buffStrByEnemyCount2);
+    updateStats();updateEnemies();
+
 
 };
 buffStrByAllCount_TEST_prepara_and_exe = () => {
+    // 味方全体の数だけ自分のbuffs.strを上昇するスペル
+    // buffStrByAllCount: { name: '全員の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    //     const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
 
 };
 buffStrByAllCount2_TEST_prepara_and_exe = () => {
+        // 味方全体の数だけ味方全員のbuffs.strを上昇するスペル
+    // buffStrByAllCount2: { name: '全員の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    //     const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
 
-};
-buffStrByAllCount2_TEST_prepara_and_exe = () => {
 
 };
 buffStrByAllCount3_TEST_prepara_and_exe = () => {
+        // 敵と味方の全体の合計数だけ味方全員のbuffs.strを上昇するスペル
+    // buffStrByAllCount3: { name: '全員の数分全員Strバフ(敵味方)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
+    //     const buffAmount = target.length + enemies.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は敵と味方全員の数(${buffAmount})分のバフをかけた!!`) } },
 
 };
 buffStrByItemCount_TEST_prepara_and_exe = () => {
