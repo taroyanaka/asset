@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-3
-<!-- SPELLとITEMを共通化(スペルをアイテムと共通化) -->
-<!-- 「高度に発達した技術は、魔法と見分けがつかない」 -->
+7
 <html lang="ja">
 <script>
 // let test = true; // テストモードのフラグ
@@ -301,29 +299,11 @@ let ITEM_LIST = [
 ];
 
  // 所持アイテムリスト
-// let INVENTORY = [
-//     { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 },
-//     { name: '力の種', type: 'buff', range: 'single', buff: 'str', val: [10, 20], cost: 0, apply_type: 'add'},
-//     { name: 'すごい力の種', type: 'buff', range: 'single', buff: 'str', val: [20, 30], cost: 0, apply_type: 'multiply'},
-// ];
-
-// INVENTORYを定義（オブジェクト型、SPELLSと同じ構造で管理）
-let INVENTORY = {
-    tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
-    effect: (target, source) => {
-        console.log("INVENTORY tradeHpMpAll effect called");
-        // 味方全員のHPとMPを入れ替えるスペル
-        // target.forEach(hero => {
-        heroes.forEach(hero => {
-            const tempHp = hero.hp;
-            hero.hp = hero.mp;
-            hero.mp = tempHp;
-            logWrite(`${hero.name}のHPとMPが入れ替わった!!`);
-        });
-    } },
-
-};
-
+let INVENTORY = [
+    { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 },
+    { name: '力の種', type: 'buff', range: 'single', buff: 'str', val: [10, 20], cost: 0, apply_type: 'add'},
+    { name: 'すごい力の種', type: 'buff', range: 'single', buff: 'str', val: [20, 30], cost: 0, apply_type: 'multiply'},
+];
 
 // SPELLの実装方針としてHP回復系は実装しない(別ゲーで敵/味方問わず戦闘中の回復がゲーム体験に悪影響と感じたため)
 // 味方のHP回復系はアイテムで実装して短期決戦を促す
@@ -399,16 +379,10 @@ const SPELLS = {
     // 所持するアイテムの数だけ単体の味方のbuffs.strを上昇するスペル
     buffStrByItemCount: { name: 'アイテムの数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buff_target = target[0];
-        // const buffAmount = INVENTORY.length;
-        // INVENTORYはオブジェクト型なので、Object.keysでキーの数を取得
-        const buffAmount = INVENTORY ? Object.keys(INVENTORY).length : 0; // 所持アイテムの数を取得
-        buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にアイテム(${buffAmount})分のバフをかけた!!`) } },
+        const buffAmount = INVENTORY.length;buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にアイテム(${buffAmount})分のバフをかけた!!`) } },
     // 所持するアイテムの数だけ味方全員のbuffs.strを上昇するスペル
     buffStrByItemCount2: { name: 'アイテムの数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-        // const buffAmount = INVENTORY.length;
-        // INVENTORYはオブジェクト型なので、Object.keysでキーの数を取得
-        const buffAmount = INVENTORY ? Object.keys(INVENTORY).length : 0; // 所持アイテムの数を取得
-        for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員にアイテム(${buffAmount})分のバフをかけた!!`) } },
+        const buffAmount = INVENTORY.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員にアイテム(${buffAmount})分のバフをかけた!!`) } },
 
     // 戦闘回数*10だけ単体の味方のbuffs.strを上昇するスペル
     buffStrByBattleCount: { name: '戦闘回数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
@@ -1798,24 +1772,17 @@ function showHeroActionSelection() {
         });
     }
 
-    // if (INVENTORY.length > 0) {
-    // INVENTORYオブジェクトの数が0以上の時のみアイテムボタンを表示
-    if (Object.keys(INVENTORY).length > 0) {
+    if (INVENTORY.length > 0) {
         const itemButton = document.createElement('button');
         itemButton.textContent = 'アイテム';
         function showItemSelection(hero) {
             actions.innerHTML = `<strong>使用するアイテムを選択してください:</strong>`;
-
-            Object.entries(INVENTORY).forEach(([itemKey, item]) => {
+            INVENTORY.forEach((item, index) => {
                 const itemButton = document.createElement('button');
                 itemButton.textContent = item.name;
-                // itemButton.onclick = () => useItem(hero, index);
-                // itemButton.onclick = () => useFooBar(hero, index); // useItemをuseFooBarに変更
-                // itemButton.onclick = () => useBuz(hero, index); // useItemをuseBuzに変更
-                itemButton.onclick = () => useBuz(hero, itemKey); // ← 修正: index→itemKey
+                itemButton.onclick = () => useItem(hero, index);
                 actions.appendChild(itemButton);
             });
-
 
             const backButton = document.createElement('button');
             backButton.textContent = '戻る';
@@ -2239,33 +2206,54 @@ function dropItems(enemyCount) { // 敵の数かけるVOLUME_DROPSのdrop
     }
 }
 
+function useItem(hero, itemIndex) {
+    const item = INVENTORY[itemIndex];
+    if (!item) return;
+    if (item.type === 'buff') {
+        applyBattleBuff(hero, item.buff, item.apply_type, item.val[0]);
+        logWrite(`${hero.name}は「${item.name}」を使った！${hero.name}の${item.buff}が${item.val[0]}上昇した！`);
+        INVENTORY.splice(itemIndex, 1);
+        return showHeroActionSelection();
+    }
+    if (item.type === 'heal' || item.type === 'mp') {
+        item.range === 'single'
+            ? showTargetSelection(hero, item, itemIndex)
+            : (
+                (item.type === 'heal' || item.type === 'mp') &&
+                heroes.filter(h => h.alive).forEach(target => {
+                    const amount = rand(...item.val);
+                    item.type === 'heal'
+                        ? (target.hp = Math.min(target.maxHp, target.hp + amount), logWrite(`${hero.name}は「${item.name}」を使った！${target.name}のHPが${amount}回復した！`))
+                        : (target.mp = Math.min(target.maxMp, target.mp + amount), logWrite(`${hero.name}は「${item.name}」を使った！${target.name}のMPが${amount}回復した！`));
+                }),
+                INVENTORY.splice(itemIndex, 1),
+                showHeroActionSelection()
+            );
+    }
+}
 
-
-// useBuz: INVENTORYからスペルを1回使って消費する関数
-function useBuz(hero, spellKey) {
-    const spell = INVENTORY[spellKey];
-    if (!spell) return;
+// useFooBar
+function useFooBar(hero, itemIndex) {
+    const spellItem = INVENTORY[itemIndex];
+    if (!spellItem) return;
 
     // effectプロパティがあればそれを実行
-    if (typeof spell.effect === 'function') {
-        if (spell.range === 'all') {
-            console.log(1);
-            spell.effect(target = null, hero);
-        } else if (spell.range === 'single') {
-            // 単体対象はUIで選択
+    if (typeof spellItem.effect === 'function') {
+        // 単体対象か全体対象かで処理を分岐
+        if (spellItem.range === 'all') {
+            spellItem.effect(heroes.filter(h => h.alive), hero);
+        } else if (spellItem.range === 'single') {
+            // 対象選択UIを表示
             actions.innerHTML = `<strong>対象を選択してください:</strong>`;
-            let targets = [];
-            if (spell.type === 'heal' || spell.type === 'buff') {
-                targets = heroes.filter(h => h.alive);
-            } else {
-                targets = enemies.filter(e => e.alive);
-            }
+            const targets = (spellItem.type === 'heal' || spellItem.type === 'buff')
+                ? heroes.filter(h => h.alive)
+                : enemies.filter(e => e.alive);
             targets.forEach(target => {
                 const btn = document.createElement('button');
                 btn.textContent = target.name;
                 btn.onclick = () => {
-                    spell.effect(target, hero);
-                    delete INVENTORY[spellKey];
+                    spellItem.effect(target, hero);
+                    INVENTORY.splice(itemIndex, 1);
                     showHeroActionSelection();
                 };
                 actions.appendChild(btn);
@@ -2277,20 +2265,64 @@ function useBuz(hero, spellKey) {
             actions.appendChild(backButton);
             return;
         } else {
-            spell.effect(null, hero);
+            spellItem.effect(null, hero);
         }
-        console.log(2);
-        delete INVENTORY[spellKey];
-                    console.log(3);
+        INVENTORY.splice(itemIndex, 1);
         showHeroActionSelection();
-                    console.log(4);
-        updateStats();updateEnemies();
-                    console.log(5);
-
+        return;
     }
-    // 全てのスペルを今後effectプロパティを持つようにするので、ここは不要
-    // 表示のアップデート
 
+    // 通常のSPELLSと同じ処理
+    if (spellItem.type === 'buff') {
+        applyBattleBuff(hero, spellItem.buff, spellItem.apply_type, spellItem.val[0]);
+        logWrite(`${hero.name}は「${spellItem.name}」を使った！${hero.name}の${spellItem.buff}が${spellItem.val[0]}上昇した！`);
+        INVENTORY.splice(itemIndex, 1);
+        showHeroActionSelection();
+        return;
+    }
+    if (spellItem.type === 'heal' || spellItem.type === 'mp') {
+        if (spellItem.range === 'single') {
+            actions.innerHTML = `<strong>対象を選択してください:</strong>`;
+            const targets = heroes.filter(h => h.alive);
+            targets.forEach(target => {
+                const btn = document.createElement('button');
+                btn.textContent = target.name;
+                btn.onclick = () => {
+                    const amount = rand(...spellItem.val);
+                    if (spellItem.type === 'heal') {
+                        target.hp = Math.min(target.maxHp, target.hp + amount);
+                        logWrite(`${hero.name}は「${spellItem.name}」を使った！${target.name}のHPが${amount}回復した！`);
+                    } else {
+                        target.mp = Math.min(target.maxMp, target.mp + amount);
+                        logWrite(`${hero.name}は「${spellItem.name}」を使った！${target.name}のMPが${amount}回復した！`);
+                    }
+                    INVENTORY.splice(itemIndex, 1);
+                    showHeroActionSelection();
+                };
+                actions.appendChild(btn);
+            });
+            // 戻るボタン
+            const backButton = document.createElement('button');
+            backButton.textContent = '戻る';
+            backButton.onclick = () => showHeroActionSelection();
+            actions.appendChild(backButton);
+            return;
+        } else {
+            heroes.filter(h => h.alive).forEach(target => {
+                const amount = rand(...spellItem.val);
+                if (spellItem.type === 'heal') {
+                    target.hp = Math.min(target.maxHp, target.hp + amount);
+                    logWrite(`${hero.name}は「${spellItem.name}」を使った！${target.name}のHPが${amount}回復した！`);
+                } else {
+                    target.mp = Math.min(target.maxMp, target.mp + amount);
+                    logWrite(`${hero.name}は「${spellItem.name}」を使った！${target.name}のMPが${amount}回復した！`);
+                }
+            });
+            INVENTORY.splice(itemIndex, 1);
+            showHeroActionSelection();
+            return;
+        }
+    }
 }
 
 function showTargetSelection(hero, item, itemIndex) {
