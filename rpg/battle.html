@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-3
+7
 <!-- SPELLとITEMを共通化(スペルをアイテムと共通化) -->
 <!-- 「高度に発達した技術は、魔法と見分けがつかない」 -->
 <html lang="ja">
 <script>
-// let test = true; // テストモードのフラグ
-const test = false;
+let test = true; // テストモードのフラグ
+// const test = false;
 </script>
 <head>
   <meta charset="UTF-8">
@@ -1501,6 +1501,7 @@ function equipAccessory(hero, accessory) {
 
 // 戦闘終了時にアクセサリを選択して装備
 function showAccessorySelection(droppedAccessories) {
+    console.log(droppedAccessories);
     actions.innerHTML = `<strong>ドロップしたアクセサリを装備してください:</strong>`;
     droppedAccessories.forEach((accessory, index) => {
         heroes.forEach((hero, heroIndex) => {
@@ -1511,7 +1512,9 @@ function showAccessorySelection(droppedAccessories) {
                 droppedAccessories.splice(index, 1); // ドロップリストから削除
                 if (droppedAccessories.length === 0) {
                     logWrite('全てのアクセサリを装備しました。');
-                    showInnOrTemple(); // 次の選択肢へ
+                    // ここで仲間化処理
+                    const defeatedEnemies = enemies.filter(e => !e.alive);
+                    convertEnemyToAlly(defeatedEnemies);
                 } else {
                     showAccessorySelection(droppedAccessories); // 再描画
                 }
@@ -1524,7 +1527,9 @@ function showAccessorySelection(droppedAccessories) {
     skipButton.textContent = '装備せず破棄';
     skipButton.onclick = () => {
         logWrite('装備しなかったアクセサリは破棄されました。');
-        showInnOrTemple(); // 次の選択肢へ
+        // ここで仲間化処理
+        const defeatedEnemies = enemies.filter(e => !e.alive);
+        convertEnemyToAlly(defeatedEnemies);
     };
     actions.appendChild(skipButton);
 }
@@ -2196,6 +2201,8 @@ function visitInn() {
 
 const calculateExpForLevel = (level) => Math.floor(50 * Math.pow(1.5, level - 1)); // レベルアップに必要な経験値を計算
 
+
+
 function giveExp() {
     function resetBuffs() {
         heroes.forEach(hero => {hero.buffs = { hp: 0, mp: 0, str: 0 }});
@@ -2224,10 +2231,13 @@ function giveExp() {
             logWrite(`${hero.name}はLv${hero.level}に上がった！`);
         }
     });
-    convertEnemyToAlly(); // 敵を仲間にする
+
+
 
     const droppedAccessories = dropAccessories(enemies.length); // アクセサリをドロップ
-    droppedAccessories.length > 0 ? showAccessorySelection(droppedAccessories) : showInnOrTemple(); // アクセサリ装備選択画面を表示
+    console.log(droppedAccessories);
+    droppedAccessories.length > 0 ? showAccessorySelection(droppedAccessories) : accessories_fn(); // アクセサリがドロップされた場合は選択画面を表示
+
 }
 
 function dropItems(enemyCount) { // 敵の数かけるVOLUME_DROPSのdrop
@@ -2382,32 +2392,37 @@ function showInnOrTemple() {
     logWrite('宿屋、神殿、修行場のいずれかを選んでください。または次の戦闘に進むこともできます。');
 }
 
-function convertEnemyToAlly() {
+function addAlly(enemyName) {
+    const defeatedEnemy = enemies.find(e => e.name === enemyName);
+    if (!defeatedEnemy) return;
+    const hero = createHero(defeatedEnemy.name, '戦士'); // 戦士として味方に追加
+    hero.hp = hero.maxHp; // HPを全回復
+    hero.mp = hero.maxMp; // MPを全回復
+    hero.learnedSpells = []; // スペルは未習得
+    heroes.push(hero);
+    logWrite(`${defeatedEnemy.name}が味方になりました！`);
+    actions.innerHTML = ''; // 選択画面を消す
+    showInnOrTemple(); // 次の行動選択画面を表示
+}
+function rejectAlly(enemyName) {
+    logWrite(`${enemyName}を仲間にするのを断りました。`);
+    actions.innerHTML = ''; // 選択画面を消す
+    showInnOrTemple(); // 次の行動選択画面を表示
+}
+
+function convertEnemyToAlly(defeatedEnemies) {
     if (heroes.length >= MAX_HEROES) {
         logWrite('味方の人数が最大です。これ以上仲間にできません。');
         showInnOrTemple(); // 仲間にできない場合は宿屋や神殿の選択肢を表示
         return;
     }
+    if (!defeatedEnemies || defeatedEnemies.length === 0) {
+        showInnOrTemple();
+        return;
+    }
     const is_be_friend = () => Math.random() * 100 < ENEMY_FRIENDLY_PER; // 敵が仲間になりたがっている確率
     if (is_be_friend()) {
         const newAlly = defeatedEnemies[rand(0, defeatedEnemies.length - 1)];
-        function addAlly(enemyName) {
-            const defeatedEnemy = enemies.find(e => e.name === enemyName);
-            if (!defeatedEnemy) return;
-            const hero = createHero(defeatedEnemy.name, '戦士'); // 戦士として味方に追加
-            hero.hp = hero.maxHp; // HPを全回復
-            hero.mp = hero.maxMp; // MPを全回復
-            hero.learnedSpells = []; // スペルは未習得
-            heroes.push(hero);
-            logWrite(`${defeatedEnemy.name}が味方になりました！`);
-            actions.innerHTML = ''; // 選択画面を消す
-            showInnOrTemple(); // 次の行動選択画面を表示
-        }
-        function rejectAlly(enemyName) {
-            logWrite(`${enemyName}を仲間にするのを断りました。`);
-            actions.innerHTML = ''; // 選択画面を消す
-            showInnOrTemple(); // 次の行動選択画面を表示
-        }
         actions.innerHTML = `
             <div>
                 <strong>${newAlly.name}が味方になりたそうにこちらを見ている…</strong>
@@ -2419,6 +2434,8 @@ function convertEnemyToAlly() {
         showInnOrTemple(); // 仲間にできない場合は宿屋や神殿の選択肢を表示
     }
 }
+
+
 
 function applyBattleBuff(hero, stat, apply_type='add', value) {
     if (hero.buffs[stat] == undefined) {
