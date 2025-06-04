@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-7
-<!-- SPELLとITEMを共通化(スペルをアイテムと共通化) -->
-<!-- 「高度に発達した技術は、魔法と見分けがつかない」 -->
+<!-- 実装の出口見えなくなってきたから一旦重複するスペルを各1つに絞る -->
 <html lang="ja">
 <script>
-let test = true; // テストモードのフラグ
-// const test = false;
+// let test = true; // テストモードのフラグ
+const test = false;
 </script>
 <head>
   <meta charset="UTF-8">
@@ -66,82 +64,46 @@ let test = true; // テストモードのフラグ
 </head>
 <body>
   <div class="left-column">
-
     <!-- テストモード用設定UI -->
-<div id="test-settings">
-    <!-- exe_test tradeHpMp_TEST -->
-<button id="btn-test" onclick="tradeHpMp_TEST_prepara_and_exe()">tradeHpMp_TEST(done)</button>
-<button id="btn-test" onclick="tradeHpMpAll_TEST_prepara_and_exe()">tradeHpMpAll_TEST(done)</button>
-<button id="btn-test" onclick="tradeMp_TEST_prepara_and_exe()">tradeMp_TEST(done)</button>
-<button id="btn-test" onclick="tradeMaxMp_TEST_prepara_and_exe()">tradeMaxMp_TEST(done)</button>
-<button id="btn-test" onclick="tradeMpAll_TEST_prepara_and_exe()">tradeMpAll_TEST(done)</button>
-
-<button id="btn-test" onclick="tradeMaxMpAll_TEST_prepara_and_exe()">tradeMaxMpAll_TEST(done)</button>
-<button id="btn-test" onclick="strBuff_TEST_prepara_and_exe()">strBuff_TEST(done)</button>
-
-
-
-<button id="btn-test" onclick="tradeMpByStr_TEST_prepara_and_exe()">tradeMpByStr_TEST(done)</button>
-<button id="btn-test" onclick="tradeMaxMpByStr_TEST_prepara_and_exe()">tradeMaxMpByStr_TEST(done)</button>
-
-
-<button id="btn-test" onclick="tradeMpAllByStr_TEST_prepara_and_exe()">tradeMpAllByStr_TEST(done)</button>
-<button id="btn-test" onclick="buffStrByEnemyCount_TEST_prepara_and_exe()">buffStrByEnemyCount_TEST(done)</button>
-<button id="btn-test" onclick="buffStrByEnemyCount2_TEST_prepara_and_exe()">buffStrByEnemyCount2_TEST(done)</button>
-<button id="btn-test" onclick="buffStrByAllCount_TEST_prepara_and_exe()">buffStrByAllCount_TEST</button>
-<button id="btn-test" onclick="buffStrByAllCount2_TEST_prepara_and_exe()">buffStrByAllCount2_TEST</button>
-<button id="btn-test" onclick="buffStrByAllCount3_TEST_prepara_and_exe()">buffStrByAllCount3_TEST</button>
-<button id="btn-test" onclick="buffStrByItemCount_TEST_prepara_and_exe()">buffStrByItemCount_TEST</button>
-<button id="btn-test" onclick="buffStrByItemCount2_TEST_prepara_and_exe()">buffStrByItemCount2_TEST</button>
-<button id="btn-test" onclick="buffStrByBattleCount_TEST_prepara_and_exe()">buffStrByBattleCount_TEST</button>
-<button id="btn-test" onclick="buffStrByBattleCount2_TEST_prepara_and_exe()">buffStrByBattleCount2_TEST</button>
-<button id="btn-test" onclick="buffStrByBattleCount3_TEST_prepara_and_exe()">buffStrByBattleCount3_TEST</button>
-<button id="btn-test" onclick="buffStrByBattleCount4_TEST_prepara_and_exe()">buffStrByBattleCount4_TEST</button>
-
-
-<!-- JOBS -->
-<!-- JOB_GROWTH -->
-<!-- HP_MULTIPLIER -->
-<label>HP倍率: <input id="input-hp-mult" type="number" step="0.01" value="1"></label><br>
-<!-- EXP_MULTIPLIER -->
-<label>EXP倍率: <input id="input-exp-mult" type="number" step="0.01" value="1"></label><br>
-<!-- INITIAL_HEROES_VOLUME -->
-<label>初期ヒーロー数: <input id="input-initial-heroes-volume" type="number" value="1"></label><br>
-<!-- MAX_HEROES -->
-<label>最大ヒーロー数: <input id="input-max-heroes" type="number" value="7"></label><br>
-<!-- VOLUME_DROPS -->
-<label>ドロップ数: <input id="input-volume-drops" type="number" value="1"></label><br>
-<!-- STR_PERCENTAGE -->
-<label>ステータスの割合: <input id="input-str-percentage" type="number" step="0.01" value="0.4"></label><br>
-<!-- STATUS_INHERITANCE_RATIO -->
-<label>ステータス引き継ぎ割合: <input id="input-status-inheritance-ratio" type="number" step="0.01" value="0.4"></label><br>
-<!-- ENEMY_FRIENDLY_PER -->
-<label>敵の味方割合: <input id="input-enemy-friendly-per" type="number" value="50"></label><br>
-<!-- ACCESSORY_DROP_RATE -->
-<label>アクセサリドロップ率: <input id="input-accessory-drop-rate" type="number" value="90"></label><br>
-<!-- MAX_ACCESSORIES_PER_HERO -->
-<label>最大装備数: <input id="input-max-accessories-per-hero" type="number" value="1"></label><br>
-<!-- ENEMY_MORE_VOLUME -->
-<label>敵の出現数の増加数: <input id="input-enemy-more-volume" type="number" value="3"></label><br>
-<!-- ENEMY_ARRAY_VOLUME -->
-<label>敵の出現数の配列: <input id="input-enemy-array-volume" type="number" value="5"></label><br>
-
-<!-- INITIAL_HEROES -->
-<!-- ENEMY_VOLUME_ARRAY -->
-<!-- JOBS -->
-<!-- JOB_GROWTH -->
-<!-- ENEMY_LIST -->
-<!-- ITEM_LIST -->
-<!-- SPELLS -->
-<!-- ULT_SPELLS -->
-<!-- ACCESSORY_LIST -->
-
-      <button id="btn-apply-settings" onclick="startBattle()">設定を適用</button>
-    </div>
-
-
+    <!-- <div id="test-settings">
+        <button id="btn-test" onclick="tradeHpMp_TEST_prepara_and_exe()">tradeHpMp_TEST(done)</button>
+        <button id="btn-test" onclick="tradeHpMpAll_TEST_prepara_and_exe()">tradeHpMpAll_TEST(done)</button>
+        <button id="btn-test" onclick="tradeMp_TEST_prepara_and_exe()">tradeMp_TEST(done)</button>
+        <button id="btn-test" onclick="tradeMaxMp_TEST_prepara_and_exe()">tradeMaxMp_TEST(done)</button>
+        <button id="btn-test" onclick="tradeMpAll_TEST_prepara_and_exe()">tradeMpAll_TEST(done)</button>
+        <button id="btn-test" onclick="tradeMaxMpAll_TEST_prepara_and_exe()">tradeMaxMpAll_TEST(done)</button>
+        <button id="btn-test" onclick="strBuff_TEST_prepara_and_exe()">strBuff_TEST(done)</button>
+        <button id="btn-test" onclick="tradeMpByStr_TEST_prepara_and_exe()">tradeMpByStr_TEST(done)</button>
+        <button id="btn-test" onclick="tradeMaxMpByStr_TEST_prepara_and_exe()">tradeMaxMpByStr_TEST(done)</button>
+        <button id="btn-test" onclick="tradeMpAllByStr_TEST_prepara_and_exe()">tradeMpAllByStr_TEST(done)</button>
+        <button id="btn-test" onclick="buffStrByEnemyCount_TEST_prepara_and_exe()">buffStrByEnemyCount_TEST(done)</button>
+        <button id="btn-test" onclick="buffStrByEnemyCount2_TEST_prepara_and_exe()">buffStrByEnemyCount2_TEST(done)</button>
+        <button id="btn-test" onclick="buffStrByAllCount_TEST_prepara_and_exe()">buffStrByAllCount_TEST</button>
+        <button id="btn-test" onclick="buffStrByAllCount2_TEST_prepara_and_exe()">buffStrByAllCount2_TEST</button>
+        <button id="btn-test" onclick="buffStrByAllCount3_TEST_prepara_and_exe()">buffStrByAllCount3_TEST</button>
+        <button id="btn-test" onclick="buffStrByItemCount_TEST_prepara_and_exe()">buffStrByItemCount_TEST</button>
+        <button id="btn-test" onclick="buffStrByItemCount2_TEST_prepara_and_exe()">buffStrByItemCount2_TEST</button>
+        <button id="btn-test" onclick="buffStrByBattleCount_TEST_prepara_and_exe()">buffStrByBattleCount_TEST</button>
+        <button id="btn-test" onclick="buffStrByBattleCount2_TEST_prepara_and_exe()">buffStrByBattleCount2_TEST</button>
+        <button id="btn-test" onclick="buffStrByBattleCount3_TEST_prepara_and_exe()">buffStrByBattleCount3_TEST</button>
+        <button id="btn-test" onclick="buffStrByBattleCount4_TEST_prepara_and_exe()">buffStrByBattleCount4_TEST</button>
+        <label>HP倍率: <input id="input-hp-mult" type="number" step="0.01" value="1"></label><br>
+        <label>EXP倍率: <input id="input-exp-mult" type="number" step="0.01" value="1"></label><br>
+        <label>初期ヒーロー数: <input id="input-initial-heroes-volume" type="number" value="1"></label><br>
+        <label>最大ヒーロー数: <input id="input-max-heroes" type="number" value="7"></label><br>
+        <label>ドロップ数: <input id="input-volume-drops" type="number" value="1"></label><br>
+        <label>ステータスの割合: <input id="input-str-percentage" type="number" step="0.01" value="0.4"></label><br>
+        <label>ステータス引き継ぎ割合: <input id="input-status-inheritance-ratio" type="number" step="0.01" value="0.4"></label><br>
+        <label>敵の味方割合: <input id="input-enemy-friendly-per" type="number" value="50"></label><br>
+        <label>アクセサリドロップ率: <input id="input-accessory-drop-rate" type="number" value="90"></label><br>
+        <label>最大装備数: <input id="input-max-accessories-per-hero" type="number" value="1"></label><br>
+        <label>敵の出現数の増加数: <input id="input-enemy-more-volume" type="number" value="3"></label><br>
+        <label>敵の出現数の配列: <input id="input-enemy-array-volume" type="number" value="5"></label><br>
+        <button id="btn-apply-settings" onclick="startBattle()">設定を適用</button>
+    </div> -->
     <div class="log" id="log"></div>
   </div>
+
   <div class="right-column">
     <div class="stats" id="stats"></div>
     <div class="enemies" id="enemies"></div>
@@ -174,26 +136,20 @@ let JOB_GROWTH = {
 let HP_MULTIPLIER = test ? 0.1 : 1; // HP倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
 let EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
 let INITIAL_HEROES_VOLUME = 3; // 初期ヒーローの数
-// 初期のヒーローの名前と職業を決めるテーブル
 let INITIAL_HEROES = [
     // ['サトウ', '戦士'],
     ['スズキ', '魔法使い'],
     ['タナカ', '僧侶'],
-];
-
-
+]; // 初期のヒーローの名前と職業を決めるテーブル
 let ENEMY_MORE_VOLUME = 3; // 敵の出現数の増加数
 let ENEMY_ARRAY_VOLUME = 3; // 敵の出現数の配列
 let ENEMY_VOLUME_ARRAY = [1];
-
 let MAX_HEROES = 7; // 最大ヒーロー数
 let VOLUME_DROPS = 1; // 敵2体でVOLUME_DROPSが1ならdrop数は2
 let STR_PERCENTAGE = 0.4; // ステータスの割合    
 let STATUS_INHERITANCE_RATIO = 0.4; // 前職から引き継ぐステータスの割合
 let ENEMY_FRIENDLY_PER = test ? 100 : 50;
-// アクセサリのドロップ確率（1体あたりのドロップ確率をパーセンテージで設定）
-let ACCESSORY_DROP_RATE = 90; // 90%の確率で1体あたりドロップ
-// 1キャラ当たりの最大装備数
+let ACCESSORY_DROP_RATE = 90; // アクセサリのドロップ確率（1体あたりのドロップ確率をパーセンテージで設定）90%の確率で1体あたりドロップ
 let MAX_ACCESSORIES_PER_HERO = 1; // 1キャラ当たりの最大装備数
 
 const log = document.getElementById('log');
@@ -258,36 +214,9 @@ function initializeGame() {
 
 
 
-// let ITEM_LIST = [
 let ITEM_LIST = [
-    // itemは現在はhealのみに対応
-    { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 },
-    { name: 'やくそう2', type: 'heal', range: 'single', val: [30, 50], cost: 0 },
-    // { name: 'やくそう3', type: 'heal', range: 'single', val: [50, 70], cost: 0 },
-    { name: 'やくそう4', type: 'heal', range: 'single', val: [70, 100], cost: 0 },
-    { name: 'やくそう5', type: 'heal', range: 'single', val: [100, 150], cost: 0 },
-    // 効果範囲全員を少量回復するitem
-    // { name: '全員やくそう1', type: 'heal', range: 'all', val: [10, 20], cost: 0 },
-    { name: '全員やくそう2', type: 'heal', range: 'all', val: [20, 30], cost: 0 },
-    { name: '全員やくそう3', type: 'heal', range: 'all', val: [30, 50], cost: 0 },
-    // { name: '全員やくそう4', type: 'heal', range: 'all', val: [50, 70], cost: 0 },
-    // mp回復itemを実装
-    { name: 'まほうのせいすい1', type: 'mp', range: 'single', val: [20, 30], cost: 0 },
-    // { name: 'まほうのせいすい2', type: 'mp', range: 'single', val: [30, 50], cost: 0 },
-    // { name: 'まほうのせいすい3', type: 'mp', range: 'single', val: [50, 70], cost: 0 },
-    // { name: 'まほうのせいすい4', type: 'mp', range: 'single', val: [70, 100], cost: 0 },
-    { name: 'まほうのせいすい5', type: 'mp', range: 'single', val: [100, 150], cost: 0 },
-    // 効果範囲全員を少量回復するitem
-    { name: '全員まほうのせいすい1', type: 'mp', range: 'all', val: [10, 20], cost: 0 },
-    // { name: '全員まほうのせいすい2', type: 'mp', range: 'all', val: [20, 30], cost: 0 },
-    // { name: '全員まほうのせいすい3', type: 'mp', range: 'all', val: [30, 50], cost: 0 },
-    { name: '全員まほうのせいすい4', type: 'mp', range: 'all', val: [50, 70], cost: 0 },
-
-    // 味方全員のHPとMPを入れ替えるアイテム
     { id: 'tradeHpMpAll', name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
     effect: (target, source) => {
-        // 味方全員のHPとMPを入れ替えるスペル
-        // target.forEach(hero => {
         heroes.forEach(hero => {
             const tempHp = hero.hp;
             hero.hp = hero.mp;
@@ -295,17 +224,7 @@ let ITEM_LIST = [
             logWrite(`${hero.name}のHPとMPが入れ替わった!!`);
         });
     } },
-
-
-
 ];
-
- // 所持アイテムリスト
-// let INVENTORY = [
-//     { name: 'やくそう1', type: 'heal', range: 'single', val: [20, 30], cost: 0 },
-//     { name: '力の種', type: 'buff', range: 'single', buff: 'str', val: [10, 20], cost: 0, apply_type: 'add'},
-//     { name: 'すごい力の種', type: 'buff', range: 'single', buff: 'str', val: [20, 30], cost: 0, apply_type: 'multiply'},
-// ];
 
 // INVENTORYを定義（オブジェクト型、SPELLSと同じ構造で管理）
 let INVENTORY = {
@@ -332,12 +251,9 @@ let INVENTORY = {
 // スペル中心のゲームになるだろうからスペル全般テストコード必要
 // コードの行数が多くなるので、スペルの実装は別ファイルに分けるかも
 const SPELLS = {
-    // chiyu: { name: '治癒', cost: 5, type: 'heal', range: 'single', val: [20, 30], requiredJobs: { 僧侶: 1 } },
-    itami: { name: '痛み', cost: 4, type: 'dmg', range: 'single', val: [20, 30], requiredJobs: { 魔法使い: 1 } },
-        // 追加の特殊スペル(未テスト)
+    // 追加の特殊スペル(未テスト)
     tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
-
-// 味方全員のHPとMPを入れ替えるスペル
+    // 味方全員のHPとMPを入れ替えるスペル
     tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
     effect: (target, source) => {
         // 味方全員のHPとMPを入れ替えるスペル
@@ -373,7 +289,6 @@ const SPELLS = {
     // 敵全体のMPの累計を自分のbuffs.strにするスペル
     tradeMpAllByStr: { name: '全員MP変換(バフ)', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.buffs.str = totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分にした!!`) } },
-
     // 敵全体の数だけ自分のbuffs.strを上昇するスペル
     buffStrByEnemyCount: { name: '敵の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は${target.map(e => e.name).join(',')}の数(${buffAmount})分のバフをかけた!!`) } },
@@ -399,17 +314,12 @@ const SPELLS = {
     // 所持するアイテムの数だけ単体の味方のbuffs.strを上昇するスペル
     buffStrByItemCount: { name: 'アイテムの数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buff_target = target[0];
-        // const buffAmount = INVENTORY.length;
-        // INVENTORYはオブジェクト型なので、Object.keysでキーの数を取得
         const buffAmount = INVENTORY ? Object.keys(INVENTORY).length : 0; // 所持アイテムの数を取得
         buff_target.buffs.str += buffAmount;logWrite(`${source.name}は${buff_target.name}にアイテム(${buffAmount})分のバフをかけた!!`) } },
     // 所持するアイテムの数だけ味方全員のbuffs.strを上昇するスペル
     buffStrByItemCount2: { name: 'アイテムの数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-        // const buffAmount = INVENTORY.length;
-        // INVENTORYはオブジェクト型なので、Object.keysでキーの数を取得
         const buffAmount = INVENTORY ? Object.keys(INVENTORY).length : 0; // 所持アイテムの数を取得
         for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員にアイテム(${buffAmount})分のバフをかけた!!`) } },
-
     // 戦闘回数*10だけ単体の味方のbuffs.strを上昇するスペル
     buffStrByBattleCount: { name: '戦闘回数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buff_target = target[0];
@@ -424,8 +334,6 @@ const SPELLS = {
     // 戦闘回数*100だけ味方全員のbuffs.strを上昇するスペル
     buffStrByBattleCount4: { name: '戦闘回数分全員Strバフ(100倍)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buffAmount = battleCount * 100;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員に戦闘回数(${buffAmount})分のバフをかけた!!`) } },
-
-
     // 敵1体をランダムな別のenemyに入れ替えるスペル
     tradeEnemyRandom: { name: '敵を入れ替え(ランダム)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const randomIndex = Math.floor(Math.random() * enemies.length);
@@ -436,7 +344,6 @@ const SPELLS = {
             const randomIndex = Math.floor(Math.random() * enemies.length);
             const temp = target[i];target[i] = enemies[randomIndex];enemies[randomIndex] = temp;
         }logWrite(`${source.name}は${target.map(e => e.name).join(',')}と${enemies.map(e => e.name).join(',')}を入れ替えた!!`) } },
-
     // 敵単体が持つbuffs.strを自分のbuffs.strにするスペル
     tradeEnemyBuffStr: { name: '敵のバフを吸収', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const temp = target[0].buffs.str;target[0].buffs.str = source.buffs.str;source.buffs.str = temp;logWrite(`${source.name}は${target[0].name}のバフを吸収した!!`) } },
@@ -450,11 +357,6 @@ const SPELLS = {
         for (let i = 0; i < target.length; i++) {
             const temp = target[i].buffs.str;target[i].buffs.str = heroes[i].buffs.str;heroes[i].buffs.str = temp;
         }logWrite(`${source.name}は${target.map(e => e.name).join(',')}のバフを吸収した!!`) } },
-
-
-
-
-
     // 味方全体の最大HPの平均数値を自分のbuffs.strにするスペル
     buffStrByAvgAllMaxHp: { name: '全員最大HP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
         effect: (target, source) => {
@@ -603,8 +505,6 @@ const SPELLS = {
             logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを敵全員のHP平均(${avgHp})にした!!`);
         } 
     },
-
-    
     // 味方全体の最大MPの平均数値を自分のbuffs.strにするスペル
     buffStrByAvgAllMaxMp: { name: '全員最大MP平均分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
         effect: (target, source) => {
@@ -753,20 +653,12 @@ const SPELLS = {
             logWrite(`${source.name}は${target.map(e => e.name).join(',')}のHPを敵全員のMP平均(${avgMp})にした!!`);
         }
     },
-
-
-
     // 単体の敵と自らを入れ替えるスペル(未テスト 他のコードも変更する必要あり)
     tradeEnemy: { name: '敵と入れ替え', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const temp = target[0];target[0] = source;source = temp;logWrite(`${source.name}は${target[0].name}と入れ替えた!!`) } },
-
     // 単体の敵のスペルを自らにコピーするスペル(未テスト 他のコードも変更する必要あり)
     copyEnemySpell: { name: '敵のスペルをコピー', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const temp = target[0];target[0] = source;source = temp;logWrite(`${source.name}は${target[0].name}のスペルをコピーした!!`) } },
-
-
-
-
     // 単体の味方にLvの数だけbuffs.strに上昇するスペル
     buffStrByLevel: { name: 'レベル分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const buff_target = target[0];
@@ -835,15 +727,6 @@ const SPELLS = {
     // buffs.str*最大HPの数を敵全体にダメージを与えるスペル
     dmgByBuffStrMaxHpAll: { name: 'バフStr*最大HP分全体ダメージ', cost: 0, type: 'dmg', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
         const dmgAmount = source.buffs.str * source.maxHp;for (let i = 0; i < target.length; i++) {const enemy = target[i];enemy.hp -= dmgAmount;logWrite(`${source.name}は${enemy.name}にバフStr(${source.buffs.str})*最大HP(${source.maxHp})分のダメージを与えた!!`) } } },
-
-
-
-
-    
-
-    
-
-
     // 単体の敵の最大HPの量だけMPを回復する(最大MPまで充填できる)スペル
     recoverMpByEnemyMaxHp: {name: '敵最大HP分MP回復',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {console.log("xxxXXX");const recoverAmount = target.maxHp;source.mp = recoverAmount > source.maxMp ? source.maxMp : recoverAmount;logWrite(`${source.name}は${target.name}の最大HP(${recoverAmount})分MPを回復した!!`)}},
     // 単体の敵の最大HPの量だけMPを回復する(最大MPを超えて充填できる)スペル
@@ -860,9 +743,6 @@ const SPELLS = {
     recoverMpByAllEnemiesMaxMp: {name: '敵全員最大MP分MP回復',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = enemies.reduce((sum, enemy) => sum + enemy.maxMp, 0);source.mp = recoverAmount > source.maxMp ? source.maxMp : recoverAmount;logWrite(`${source.name}は敵全員の最大MP(${recoverAmount})分MPを回復した!!`)}},
     // 敵全員の最大MPの合計だけMPを回復する(最大MPを超えて充填できる)スペル
     recoverMpByAllEnemiesMaxMpOver: {name: '敵全員最大MP分MP回復(リミットブレイク)',cost: 0,type: 'other',range: 'single',val: [0, 0],requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {const recoverAmount = enemies.reduce((sum, enemy) => sum + enemy.maxMp, 0);source.mp += recoverAmount;logWrite(`${source.name}は敵全員の最大MP(${recoverAmount})分MPを回復した!!`)}},
-
-
-
     // 敵の最大MPと同じ量のダメージのスペル
     dealMaxMpDmg: { name: '最大MPダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = target.maxMp;target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大MPをダメージとして食らわせた!!`) } },
     // 敵の最大MPの倍の量のダメージのスペル
@@ -877,7 +757,6 @@ const SPELLS = {
         effect: (target, source) => {const dealAmount = target.maxMp;
         for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}の最大MPをダメージとして食らわせた!!`);}
     } },
-    
     // 敵の最大HPと1/4の量のダメージのスペル
     dealQuarterMaxHpDmg: { name: '最大HP1/4ダメージ', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const dealAmount = Math.floor(target.maxHp * 0.25);target.hp -= dealAmount;logWrite(`${source.name}が${target.name}の最大HPをダメージとして食らわせた!!`) } },
     // 敵の最大HPの半分の量のダメージのスペル
@@ -894,13 +773,11 @@ const SPELLS = {
         effect: (target, source) => {const dealAmount = Math.floor(target.maxHp * 0.5);
         for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}の最大HPをダメージとして食らわせた!!`);}
     } },
-
     // enemiesの数だけ単体の敵にダメージを与えるスペル
     dealSingleDmgAll: { name: '敵数ダメージ単体', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
         effect: (target, source) => {const dealAmount = enemies.length;
         target.hp -= dealAmount;logWrite(`${source.name}が${target.name}にダメージを与えた!!`);}
     },
-
     // enemiesの数だけ全体の敵にダメージを与えるスペル
     dealAllDmgAll: { name: '敵数ダメージ全体', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
         effect: (target, source) => {const dealAmount = enemies.length;
@@ -916,16 +793,9 @@ const SPELLS = {
         effect: (target, source) => {const dealAmount = heroes.length;
         for (let i = 0; i < enemies.length; i++) {const enemy = enemies[i];enemy.hp -= dealAmount;logWrite(`${source.name}が${enemy.name}にダメージを与えた!!`);}
     } },
-
-
-
-
     // 実行したキャラクタに対象からMPを吸収する
     drainMp: { name: 'MP吸収', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
     effect: (target, source) => {const drainAmount = Math.floor(target.mp * 0.5);target.mp -= drainAmount;source.mp += drainAmount;logWrite(`${source.name}が${target.name}からMPを吸収した!!`) } },
-
-    tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
-
     // 選択した敵と同じモンスター1体を味方に召喚するスペル
     summonSameMonster: { name: '同じモンスター召喚', cost: 0, type: 'summon', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, 
         effect: (target, caster) => {
@@ -1000,18 +870,9 @@ const SPELLS = {
         } 
     },
 
-
-
-
 };
 
 // SPELLS_TEST それぞれのSPELLのテストをするためのステータスと操作の実行をまとめたコード
-// tradeHpMp: { name: '変換', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {const tempHp = target.hp;target.hp = target.mp;target.mp = tempHp;logWrite(`${target.name}のHPとMPが入れ替わった!!`) } },
-// であればtradeHpMp_TESTというオブジェクトを作り、全部大文字と_の定数の数値を変更して設定を適用してエネミーとヒーローのステータスの変更を測定する
-
-
-
-
 function tradeHpMp_TEST_prepara_and_exe(){
     const tradeHpMp_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
     function tradeHpMp_TEST(test_fn, target, source) {
@@ -1030,25 +891,19 @@ function tradeHpMp_TEST_prepara_and_exe(){
 tradeHpMp_TEST((SPELLS.tradeHpMp||ITEM_LIST.tradeHpMp||INVENTORY.tradeHpMp), heroes[1], heroes[1]);
     updateStats();
 }
-
 tradeHpMpAll_TEST_prepara_and_exe = () => {
     const tradeHpMpAll_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
     function tradeHpMpAll_TEST(test_fn) {
         // heroes[0]のHPとMPを保存
         const target_mp_before = JSON.parse(JSON.stringify(heroes[0].mp));
         const target_hp_before = JSON.parse(JSON.stringify(heroes[0].hp));
-        // heroes[1]のHPとMPを保存
         const target_mp2_before = JSON.parse(JSON.stringify(heroes[1].mp));
         const target_hp2_before = JSON.parse(JSON.stringify(heroes[1].hp));
-        // effectを実行
         test_fn.effect(heroes[0], heroes[1]);
-        // 全員のHPとMPを確認して、入れ替わっているかを確認
         const target_hp_after = heroes[0].hp;
         const target_mp_after = heroes[0].mp;
         const target_hp2_after = heroes[1].hp;
         const target_mp2_after = heroes[1].mp;
-        // target_mp_beforeとtarget_hp_afterが入れ替わっているかを確認
-        // target_mp2_beforeとtarget_hp2_afterが入れ替わっているかを確認
         if (target_hp_after === target_mp_before && target_mp_after === target_hp_before &&
             target_hp2_after === target_mp2_before && target_mp2_after === target_hp2_before) {
             console.log(`テスト成功: ${heroes[0].name}のHP(${target_hp_before})とMP(${target_mp_before})が入れ替わり、${heroes[1].name}のHP(${target_hp2_before})とMP(${target_mp2_before})が入れ替わった!!`);
@@ -1084,12 +939,8 @@ tradeMp_TEST_prepara_and_exe = () => {
 tradeMaxMp_TEST_prepara_and_exe = () => {
     const tradeMaxMp_TEST_prepara = () => {
         INITIAL_HEROES_VOLUME = 3;
-  
-
         startBattle()}
-
     function tradeMaxMp_TEST(test_fn, target, source) {
-        // 敵単体の最大MPを自分のMPと入れ替えるスペル
         const target_max_mp = JSON.parse(JSON.stringify(target.maxMp));
         const source_mp = JSON.parse(JSON.stringify(source.mp));
         test_fn.effect(target, source);
@@ -1107,11 +958,7 @@ tradeMaxMp_TEST_prepara_and_exe = () => {
     updateStats();updateEnemies();
 };
 tradeMpAll_TEST_prepara_and_exe = () => {
-    // 敵全体のMPの累計を自分のMPにするスペル
     function tradeMpAll_TEST(test_fn, target, source) {
-    // 敵全体のMPの累計を自分のMPにするスペル
-    // tradeMpAll: { name: '全員MP変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    // const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.mp = totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分得た!!`) } },
         const totalMp = enemies.reduce((sum, enemy) => sum + enemy.mp, 0);
         test_fn.effect(enemies, source);
         const source_mp_after = source.mp;
@@ -1126,13 +973,11 @@ tradeMpAll_TEST_prepara_and_exe = () => {
     updateStats();updateEnemies();
 };
 tradeMaxMpAll_TEST_prepara_and_exe = () => {
-        // const totalMaxMp = target.reduce((sum, enemy) => sum + enemy.maxMp, 0);source.mp = totalMaxMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}の最大MPを合計(${totalMaxMp})にした!!`) } },
     const tradeMaxMpAll_TEST_prepara = () => {
         INITIAL_HEROES_VOLUME = 3;
         startBattle();
     };
     function tradeMaxMpAll_TEST(test_fn, target, source) {
-        // 敵全体の最大MPの累計を自分のMPにするスペル
         const totalMaxMp = enemies.reduce((sum, enemy) => sum + enemy.maxMp, 0);
         test_fn.effect(enemies, source);
         const source_mp_after = source.mp;
@@ -1148,9 +993,7 @@ tradeMaxMpAll_TEST_prepara_and_exe = () => {
 
 };
 strBuff_TEST_prepara_and_exe = () => {
-    // buffs.strが機能してるかダメージが増えるかを確認するテスト
     const strBuff_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
-    // buff前とbuff後のダメージを比較するテスト
     function no_buff_dmg(test_fn, target, source) {
         const baseDmg = test_fn.val[0];
         const dmg = baseDmg + source.buffs.str;
@@ -1166,7 +1009,6 @@ strBuff_TEST_prepara_and_exe = () => {
     function strBuff_TEST(test_fn, target, source) {
         const no_buff_dmg_value = no_buff_dmg(test_fn, target, source);
         console.log(`バフ前のダメージ: ${no_buff_dmg_value}`);
-        // buffs.strを増やす
         source.buffs.str += 10;
         const buffedDmg = buff_dmg(test_fn, target, source);
         console.log(`バフ後のダメージ: ${buffedDmg}`);
@@ -1177,14 +1019,10 @@ strBuff_TEST_prepara_and_exe = () => {
         }
     };
     strBuff_TEST_prepara();
-    // SPELLS.itami など val: [20, 30] のスペルを渡す
     strBuff_TEST((SPELLS.itami||ITEM_LIST.itami||INVENTORY.itami), enemies[0], heroes[0]);
     updateStats();updateEnemies();
 };
 tradeMpByStr_TEST_prepara_and_exe = () => {
-        // 敵単体のMPを自分のbuffs.strにするスペル
-    // tradeMpByStr: { name: 'MP変換(バフ)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },effect: (target, source) => {
-    //     const tempMp = target.mp;target.mp = source.buffs.str;source.buffs.str = tempMp;logWrite(`${source.name}は${target.name}のMPとバフを入れ替えた!!`) } },
     const tradeMpByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
     function tradeMpByStr_TEST(test_fn, target, source) {
         const target_mp = JSON.parse(JSON.stringify(target.mp));
@@ -1204,9 +1042,6 @@ tradeMpByStr_TEST_prepara_and_exe = () => {
 
 };
 tradeMaxMpByStr_TEST_prepara_and_exe = () => {
-        // 敵単体の最大MPを自分のbuffs.strにするスペル
-    // tradeMaxMpByStr: { name: '最大MP変換(バフ)', cost: 0, type: 'other', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    //     const tempMp = target.maxMp;target.maxMp = source.buffs.str;source.buffs.str = tempMp;logWrite(`${source.name}は${target.name}の最大MPとバフを入れ替えた!!`) } },
     const tradeMaxMpByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
     function tradeMaxMpByStr_TEST(test_fn, target, source) {
         const target_max_mp = JSON.parse(JSON.stringify(target.maxMp));
@@ -1226,9 +1061,6 @@ tradeMaxMpByStr_TEST_prepara_and_exe = () => {
 
 };
 tradeMpAllByStr_TEST_prepara_and_exe = () => {
-    // 敵全体のMPの累計を自分のbuffs.strにするスペル
-    // tradeMpAllByStr: { name: '全員MP変換(バフ)', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    //     const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);source.buffs.str += totalMp;logWrite(`${source.name}は${target.map(e => e.name).join(',')}のMPを合計(${totalMp})分吸収した!!`) } },
     const tradeMpAllByStr_TEST_prepara = () => {INITIAL_HEROES_VOLUME = 2;startBattle()};
     function tradeMpAllByStr_TEST(test_fn, target, source) {
         const totalMp = target.reduce((sum, enemy) => sum + enemy.mp, 0);
@@ -1246,9 +1078,6 @@ tradeMpAllByStr_TEST_prepara_and_exe = () => {
 
 };
 buffStrByEnemyCount_TEST_prepara_and_exe = () => {
-    // 敵全体の数だけ自分のbuffs.strを上昇するスペル
-    // buffStrByEnemyCount: { name: '敵の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    //     const buffAmount = target.length;source.buffs.str += buffAmount;logWrite(`${source.name}は${target.map(e => e.name).join(',')}の数(${buffAmount})分のバフをかけた!!`) } },
     const buffStrByEnemyCount_TEST_prepara = () => { INITIAL_HEROES_VOLUME = 2; startBattle(); };
     function buffStrByEnemyCount_TEST(test_fn, target, source) {
         const source_str_before = source.buffs.str;
@@ -1265,15 +1094,8 @@ buffStrByEnemyCount_TEST_prepara_and_exe = () => {
     buffStrByEnemyCount_TEST((SPELLS.buffStrByEnemyCount||ITEM_LIST.buffStrByEnemyCount||INVENTORY.buffStrByEnemyCount), enemies, heroes[0]);
     updateStats();
     updateEnemies();
-
-
-
-
 };
 buffStrByEnemyCount2_TEST_prepara_and_exe = () => {
-    // 敵全体の数だけ味方全員のbuffs.strを上昇するスペル
-    // buffStrByEnemyCount2: { name: '敵の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    //     const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
     const buffStrByEnemyCount2_TEST_prepara = () => { INITIAL_HEROES_VOLUME = 2; startBattle(); };
     function buffStrByEnemyCount2_TEST(test_fn, target, source) {
         const enemy_count = enemies.length;
@@ -1293,175 +1115,13 @@ buffStrByEnemyCount2_TEST_prepara_and_exe = () => {
     buffStrByEnemyCount2_TEST_prepara();
     buffStrByEnemyCount2_TEST((SPELLS.buffStrByEnemyCount2||ITEM_LIST.buffStrByEnemyCount2||INVENTORY.buffStrByEnemyCount2));
     updateStats();updateEnemies();
-
-
 };
-
-
-
-
-
-buffStrByAllCount_TEST_prepara_and_exe = () => {
-    // // 味方全体の数だけ自分のbuffs.strを上昇するスペル
-    // buffStrByAllCount: { name: '全員の数分Strバフ', cost: 0, type: 'buff', range: 'single', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    //     const buffAmount = heroes.length + enemies.length; // 味方全体の数 + 敵全体の数
-    //     source.buffs.str += buffAmount;logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
-
-
-
-
-};
-buffStrByAllCount2_TEST_prepara_and_exe = () => {
-        // 味方全体の数だけ味方全員のbuffs.strを上昇するスペル
-    // buffStrByAllCount2: { name: '全員の数分全員Strバフ', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    //     const buffAmount = target.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は味方全員の数(${buffAmount})分のバフをかけた!!`) } },
-
-
-};
-buffStrByAllCount3_TEST_prepara_and_exe = () => {
-        // 敵と味方の全体の合計数だけ味方全員のbuffs.strを上昇するスペル
-    // buffStrByAllCount3: { name: '全員の数分全員Strバフ(敵味方)', cost: 0, type: 'buff', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 }, effect: (target, source) => {
-    //     const buffAmount = target.length + enemies.length;for (let i = 0; i < heroes.length; i++) {heroes[i].buffs.str += buffAmount;}logWrite(`${source.name}は敵と味方全員の数(${buffAmount})分のバフをかけた!!`) } },
-
-};
-buffStrByItemCount_TEST_prepara_and_exe = () => {
-
-};
-buffStrByItemCount2_TEST_prepara_and_exe = () => {
-
-};
-buffStrByBattleCount_TEST_prepara_and_exe = () => {
-
-};
-buffStrByBattleCount2_TEST_prepara_and_exe = () => {
-
-};
-buffStrByBattleCount3_TEST_prepara_and_exe = () => {
-
-};
-buffStrByBattleCount4_TEST_prepara_and_exe = () => {
-
-};
-// tradeEnemyRandom_TEST_prepara_and_exe
-// tradeEnemyAllRandom_TEST_prepara_and_exe
-// tradeEnemyBuffStr_TEST_prepara_and_exe
-// tradeEnemyBuffStrAll_TEST_prepara_and_exe
-// tradeEnemyBuffStrAll2_TEST_prepara_and_exe
-// buffStrByAvgAllMaxHp_TEST_prepara_and_exe
-// buffStrByAvgAllMaxHp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllMaxHp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllMaxHp2_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesMaxHp_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesMaxHp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesMaxHp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesMaxHp2_TEST_prepara_and_exe
-// buffStrByAvgAllHp_TEST_prepara_and_exe
-// buffStrByAvgAllHp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllHp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllHp2_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesHp_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesHp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesHp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesHp2_TEST_prepara_and_exe
-// buffStrByAvgAllMaxMp_TEST_prepara_and_exe
-// buffStrByAvgAllMaxMp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllMaxMp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllMaxMp2_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesMaxMp_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesMaxMp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesMaxMp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesMaxMp2_TEST_prepara_and_exe
-// buffStrByAvgAllMp_TEST_prepara_and_exe
-// buffStrByAvgAllMp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllMp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllMp2_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesMp_TEST_prepara_and_exe
-// buffStrByAvgAllEnemiesMp2_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesMp_TEST_prepara_and_exe
-// buffEnemyHpByAvgAllEnemiesMp2_TEST_prepara_and_exe
-// tradeEnemy_TEST_prepara_and_exe
-// copyEnemySpell_TEST_prepara_and_exe
-// buffStrByLevel_TEST_prepara_and_exe
-// buffStrByMaxHp_TEST_prepara_and_exe
-// buffStrByMaxMp_TEST_prepara_and_exe
-// buffStrByHp_TEST_prepara_and_exe
-// buffStrByMp_TEST_prepara_and_exe
-// buffStrByAllMaxHp_TEST_prepara_and_exe
-// buffStrByAllMaxMp_TEST_prepara_and_exe
-// buffStrDouble_TEST_prepara_and_exe
-// buffStrDoubleAll_TEST_prepara_and_exe
-// buffStrTenTimes_TEST_prepara_and_exe
-// buffStrTenTimesAll_TEST_prepara_and_exe
-// buffStrByExp_TEST_prepara_and_exe
-// dmgByExp_TEST_prepara_and_exe
-// dmgByAllExp_TEST_prepara_and_exe
-// dmgByAllExpSingle_TEST_prepara_and_exe
-// dmgByAllExpAll_TEST_prepara_and_exe
-// dmgByBuffStrMaxMp_TEST_prepara_and_exe
-// dmgByBuffStrMaxMpAll_TEST_prepara_and_exe
-// dmgByBuffStrMaxHp_TEST_prepara_and_exe
-// dmgByBuffStrMaxHpAll_TEST_prepara_and_exe
-// dealMaxMpDmg_TEST_prepara_and_exe
-// dealMaxDoubleMpDmg_TEST_prepara_and_exe
-// dealMpDmg_TEST_prepara_and_exe
-// dealDoubleMpDmg_TEST_prepara_and_exe
-// dealMaxMpDmgAll_TEST_prepara_and_exe
-// dealQuarterMaxHpDmg_TEST_prepara_and_exe
-// dealHalfMaxHpDmg_TEST_prepara_and_exe
-// dealMaxHpDmg_TEST_prepara_and_exe
-// dealQuarterMaxHpDmgAll_TEST_prepara_and_exe
-// dealHalfMaxHpDmgAll_TEST_prepara_and_exe
-// dealSingleDmgAll_TEST_prepara_and_exe
-// dealAllDmgAll_TEST_prepara_and_exe
-// dealSingleDmgHeroes_TEST_prepara_and_exe
-// dealAllDmgHeroes_TEST_prepara_and_exe
-// drainMp_TEST_prepara_and_exe
-// tsuyoiItami_TEST_prepara_and_exe
-// summonSameMonster_TEST_prepara_and_exe
-// summonRandomMonster_TEST_prepara_and_exe
-// summonNormalMonster_TEST_prepara_and_exe
-// summonAllies_TEST_prepara_and_exe
-
-
-
+buffStrByAllCount_TEST_prepara_and_exe = () => {};
 // SPELLS_TESTに格納してまとめて増えたら一気に実行する
-const SPELLS_TEST = {
-    tradeHpMp_TEST_prepara_and_exe,
-};
-
-
+const SPELLS_TEST = {};
 
 
 const ULT_SPELLS = {
-    kuro: { name: '黒', cost: 6, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 黒魔道士: 1 } },
-    // shiro: { name: '白', cost: 6, type: 'heal', range: 'all', val: [10, 15], requiredJobs: { 白魔道士: 1 } },
-    // saisei: { name: '再生', cost: 20, type: 'heal', range: 'single', val: [50, 70], requiredJobs: { 僧侶: 3 } },
-    // tsuyoiItami: { name: '強い痛み', cost: 20, type: 'dmg', range: 'single', val: [50, 70], requiredJobs: { 魔法使い: 3 } },
-    fukaiKuro: { name: '深い黒', cost: 25, type: 'dmg', range: 'all', val: [30, 50], requiredJobs: { 黒魔道士: 6 } },
-    // mabayuiShiro: { name: '眩い白', cost: 25, type: 'heal', range: 'all', val: [30, 50], requiredJobs: { 白魔道士: 6 } },
-    sakebi: { name: '叫び', cost: 0, type: 'dmg', range: 'all', val: [5, 10], requiredJobs: { 戦士: 4 } },
-    houkou: { name: '咆哮', cost: 0, type: 'dmg', range: 'all', val: [10, 15], requiredJobs: { 戦士: 6 } },
-    // tetsuheiYu: { name: '鉄壁癒', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 僧侶: 2 } },
-    // senshinOn: { name: '戦神恩', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 僧侶: 4 } },
-    makenJin: { name: '魔斬刃', cost: 5, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 魔法使い: 2 } },
-    kenmaJin: { name: '剣魔陣', cost: 10, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 魔法使い: 4 } },
-    kokuenGe: { name: '黒炎撃', cost: 5, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 黒魔道士: 2 } },
-    anzanJin: { name: '暗斬陣', cost: 10, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 黒魔道士: 4 } },
-    // seigoJin: { name: '聖護陣', cost: 5, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 戦士: 2, 白魔道士: 2 } },
-    // kosenKo: { name: '光戦鼓', cost: 10, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 戦士: 4, 白魔道士: 4 } },
-    // iyaseiKo: { name: '癒精光', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 魔法使い: 2 } },
-    // kamiiyuWa: { name: '神癒輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 魔法使い: 4 } },
-    yamiyuHo: { name: '闇癒法', cost: 10, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 黒魔道士: 2 } },
-    kuroFukuin: { name: '黒福音', cost: 20, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 黒魔道士: 4 } },
-    // seiyuJutsu: { name: '清癒術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 僧侶: 2, 白魔道士: 2 } },
-    // kodoRin: { name: '光導輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 僧侶: 4, 白魔道士: 4 } },
-    mashoJin: { name: '魔焼陣', cost: 10, type: 'dmg', range: 'single', val: [30, 50], requiredJobs: { 魔法使い: 2, 黒魔道士: 2 } },
-    meishoHa: { name: '冥衝波', cost: 20, type: 'dmg', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 黒魔道士: 4 } },
-    // seikoJutsu: { name: '精光術', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 魔法使い: 2, 白魔道士: 2 } },
-    // kamiiyuMon: { name: '神癒紋', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 魔法使い: 4, 白魔道士: 4 } },
-    // konmeiYu: { name: '昏明癒', cost: 10, type: 'heal', range: 'single', val: [30, 50], requiredJobs: { 黒魔道士: 2, 白魔道士: 2 } },
-    // seiAnRin: { name: '聖闇輪', cost: 20, type: 'heal', range: 'all', val: [40, 60], requiredJobs: { 黒魔道士: 4, 白魔道士: 4 } },
-
 
 };
 
@@ -1589,99 +1249,6 @@ function allHeroesAttack() {
     });
     executeHeroActions(); // 全員の攻撃を即時実行
 }
-
-// function showHeroActionSelection() {
-//     if (currentHeroIndex >= heroes.length) {
-//         isEnemyTurn = true;
-//         executeHeroActions();
-//         return;
-//     }
-
-//     const hero = heroes[currentHeroIndex];
-//     if (!hero.alive) {
-//         currentHeroIndex++;
-//         showHeroActionSelection();
-//         return;
-//     }
-
-//     actions.innerHTML = `<strong>${hero.name}の行動を選択してください:</strong>`;
-//     const atkButton = document.createElement('button');
-//     atkButton.textContent = 'たたかう';
-
-//     atkButton.onclick = () => {showEnemySelectionForAttack(hero)};
-//     actions.appendChild(atkButton);
-
-//     // 全員戦うボタンを追加 (testがtrueの時のみ表示)
-//     if (test) {
-//         const allAtkButton = document.createElement('button');
-//         allAtkButton.textContent = '全員戦う';
-//         allAtkButton.onclick = () => {
-//             allHeroesAttack();
-//         };
-//         actions.appendChild(allAtkButton);
-//     }
-
-//     // 通常スペルの表示
-//     Object.entries(SPELLS).forEach(([key, sp]) => {
-//         if (hero.mp >= sp.cost) {
-//             const spellButton = document.createElement('button');
-//             spellButton.textContent = sp.name; // 日本語名を表示
-//             spellButton.onclick = () => {
-//                 const target = sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget();
-//                 if (target) {
-//                     actionsQueue.push({ hero, action: 'spell', spell: key, target });
-//                     currentHeroIndex++;
-//                     showHeroActionSelection();
-//                 }
-//             };
-//             actions.appendChild(spellButton);
-//         }
-//     });
-
-//     // 習得済みスペルの表示
-//     if (hero.learnedSpells && hero.learnedSpells.length > 0) {
-//         hero.learnedSpells.forEach(spellKey => {
-//             const sp = ULT_SPELLS[spellKey];
-//             if (hero.mp >= sp.cost) {
-//                 const spellButton = document.createElement('button');
-//                 spellButton.textContent = sp.name; // 日本語名を表示
-//                 spellButton.onclick = () => {
-//                     // const target = sp.range === 'all' ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
-//                     // effectがある場合はtargetをnullにする
-//                     const target = sp.effect ? null : (sp.type === 'heal' ? selectHeroTarget() : selectEnemyTarget());
-
-//                     if (sp.range === 'all' || target) {
-//                         actionsQueue.push({ hero, action: 'spell', spell: spellKey, target });
-//                         currentHeroIndex++;
-//                         showHeroActionSelection();
-//                     }
-//                 };
-//                 actions.appendChild(spellButton);
-//             }
-//         });
-//     }
-
-//     if (INVENTORY.length > 0) {
-//         const itemButton = document.createElement('button');
-//         itemButton.textContent = 'アイテム';
-//         function showItemSelection(hero) {
-//             actions.innerHTML = `<strong>使用するアイテムを選択してください:</strong>`;
-//             INVENTORY.forEach((item, index) => {
-//                 const itemButton = document.createElement('button');
-//                 itemButton.textContent = item.name;
-//                 itemButton.onclick = () => useItem(hero, index);
-//                 actions.appendChild(itemButton);
-//             });
-
-//             const backButton = document.createElement('button');
-//             backButton.textContent = '戻る';
-//             backButton.onclick = () => showHeroActionSelection();
-//             actions.appendChild(backButton);
-//         }
-//         itemButton.onclick = () => {showItemSelection(hero)};
-//         actions.appendChild(itemButton);
-//     }
-// }
 
 function showHeroActionSelection() {
     if (currentHeroIndex >= heroes.length) {
@@ -1849,7 +1416,6 @@ function updateStats() {
 }
 
 function updateEnemies(){ 
-    // enemiesDiv.innerHTML=enemies.map(e=>`<div class="enemy ${!e.alive?'dead':''}" data-id="${e.id}">${e.name} HP:${e.hp}/${e.maxHp}</div>`).join('');
     enemiesDiv.innerHTML=enemies.map(e=>`<div class="enemy ${!e.alive?'dead':''}" data-id="${e.id}">${e.name} HP:${e.hp}/${e.maxHp} MP:${e.mp}/${e.maxMp}</div>`).join('');
 }
 
@@ -2064,16 +1630,9 @@ function castSpell(hero, spell, target) {
 
     hero.mp -= sp.cost;
 
-    console.log(0);
     if (sp.type === 'buff') {
-        // 味方を指定してその味方にbuffをかける(もしくは味方全体にかける)
         const buffTarget = sp.range === 'all' ? heroes.filter(h => h.alive) : [target];
-        // console.log(target);
-        console.log(buffTarget);
-        // console.log(source);
         sp.effect(buffTarget, hero);
-
-
         return;
     }
 
@@ -2083,16 +1642,11 @@ function castSpell(hero, spell, target) {
         (typeof sp.effect === 'function') ? sp.effect(target, hero) : logWrite(`${spell}の効果を実行できませんでした。`);
         return;
     }
-    console.log(1);
+
     // sp.type summonの場合の処理
     if (sp.type === 'summon') {
-            console.log(2);
-
         // sp.effectを実行
         sp.effect(target=null, hero);
-            console.log(3);
-
-        // logWrite(`${hero.name}は召喚を唱えた！${summonedHero.name}が味方になった!!`);
         return;
     }
     
