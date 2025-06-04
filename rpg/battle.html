@@ -159,15 +159,9 @@ const actions = document.getElementById('actions');
 
 // ゲームのテンポのために初期レベル帯のエネミーの経験値は高く設定
 let ENEMY_LIST = [
-// {name: 'スライム', level: 1, hp: 30, mp: 0, exp: 50, maxHp: 80, maxMp: 0, str: 12, int: 2},
 {name: 'スライム', level: 1, hp: 100, mp: 100, exp: 50, maxHp: 150, maxMp: 150, str: 12, int: 2},
-// {name: 'バンシー', level: 1, hp: 25, mp: 10, exp: 60, maxHp: 25, maxMp: 10, str: 8, int: 6},
-// {name: 'バンシー', level: 1, hp: 25, mp: 40, exp: 60, maxHp: 25, maxMp: 40, str: 8, int: 6},
 {name: 'バンシー', level: 1, hp: 100, mp: 100, exp: 50, maxHp: 150, maxMp: 150, str: 12, int: 2},
-
-// {name: 'コボルト', level: 1, hp: 20, mp: 0, exp: 90, maxHp: 20, maxMp: 0, str: 10, int: 4},
 {name: 'コボルト', level: 1, hp: 100, mp: 100, exp: 50, maxHp: 150, maxMp: 150, str: 12, int: 2},
-
 {name: 'ゴブリン', level: 2, hp: 40, mp: 0, exp: 90, maxHp: 40, maxMp: 0, str: 12, int: 5},
 {name: 'バジリスク', level: 2, hp: 35, mp: 5, exp: 100, maxHp: 35, maxMp: 5, str: 14, int: 7},
 {name: 'ケルベロス', level: 2, hp: 30, mp: 0, exp: 110, maxHp: 30, maxMp: 0, str: 16, int: 6},
@@ -201,8 +195,7 @@ let enemies = [];
 
 function initializeGame() {
     INITIAL_HEROES = INITIAL_HEROES.slice(0, INITIAL_HEROES_VOLUME); // 初期ヒーローの数だけスライス
-    // ENEMY_MORE_VOLUMEが3でENEMY_ARRAY_VOLUMEが3ならENEMY_VOLUME_ARRAYは[1, 4, 7]になる
-    ENEMY_VOLUME_ARRAY = Array.from({ length: ENEMY_ARRAY_VOLUME }, (_, i) => (i + 1) * ENEMY_MORE_VOLUME + 1);
+    ENEMY_VOLUME_ARRAY = Array.from({ length: ENEMY_ARRAY_VOLUME }, (_, i) => (i + 1) * ENEMY_MORE_VOLUME + 1);    // ENEMY_MORE_VOLUMEが3でENEMY_ARRAY_VOLUMEが3ならENEMY_VOLUME_ARRAYは[1, 4, 7]になる
     ENEMY_LIST = ENEMY_LIST.map(e => test ? { ...e, hp: Math.floor(e.hp * HP_MULTIPLIER), exp: Math.floor(e.exp * EXP_MULTIPLIER) } : e);
     heroes = INITIAL_HEROES.map((hero) => {
         const [name, job] = hero;
@@ -256,14 +249,12 @@ const SPELLS = {
     // 味方全員のHPとMPを入れ替えるスペル
     tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
     effect: (target, source) => {
-        // 味方全員のHPとMPを入れ替えるスペル
-        // target.forEach(hero => {
-        heroes.forEach(hero => {
+          heroes.forEach(hero => {
             const tempHp = hero.hp;
             hero.hp = hero.mp;
             hero.mp = tempHp;
             logWrite(`${hero.name}のHPとMPが入れ替わった!!`);
-        });
+        }); // 味方全員のHPとMPを入れ替えるスペル
     } },
 
     // 敵単体のMPを自分のMPと入れ替えるスペル
