@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-1
 <!-- spellの種類100から10に、エネミー最大レベル半分にする、
     とりあえずリリースまで駆け抜ける 2作か3作目で当たり狙いに行く
     (dlsiteがandroidのアプリ審査みたいにクソのションベン煮込みではないことをまず確かめる)
@@ -125,6 +124,7 @@ function rand(min, max) {
     return Math.floor(seed / 233280 * (max - min + 1)) + min;
 }
 
+
 let JOBS = {
     戦士: { hp: 80, mp: 0 },
     僧侶: { hp: 60, mp: 20 },
@@ -166,36 +166,37 @@ const actions = document.getElementById('actions');
 
 // ゲームのテンポのために初期レベル帯のエネミーの経験値は高く設定
 let ENEMY_LIST = [
-{"name": "スライム","level": 1,"hp": 20,"mp": 0,"exp": 50,"maxHp": 20,"maxMp": 0,"str": 8,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "戦士","jobHistory": {"戦士": 0},"accessories": []},
-{"name": "バンシー","level": 1,"hp": 20,"mp": 20,"exp": 50,"maxHp": 20,"maxMp": 20,"str": 12,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "白魔道士","jobHistory": {"白魔道士": 0},"accessories": []},
-{"name": "コボルト","level": 1,"hp": 30,"mp": 0,"exp": 0,"maxHp": 30,"maxMp": 0,"str": 15,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "ゴブリン","level": 1,"hp": 40,"mp": 0,"exp": 90,"maxHp": 40,"maxMp": 0,"str": 12,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "バジリスク","level": 1,"hp": 35,"mp": 0,"exp": 100,"maxHp": 35,"maxMp": 0,"str": 14,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "戦士","jobHistory": {"戦士": 0},"accessories": []},
-{"name": "ケルベロス","level": 1,"hp": 30,"mp": 0,"exp": 110,"maxHp": 30,"maxMp": 0,"str": 16,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "サイクロプス","level": 2,"hp": 60,"mp": 0,"exp": 30,"maxHp": 60,"maxMp": 0,"str": 18,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "戦士","jobHistory": {"戦士": 0},"accessories": []},
-{"name": "リッチ","level": 2,"hp": 50,"mp": 0,"exp": 28,"maxHp": 50,"maxMp": 0,"str": 14,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "黒魔道士","jobHistory": {"黒魔道士": 0},"accessories": []},
-{"name": "ウォーロック","level": 2,"hp": 31,"mp": 0,"exp": 32,"maxHp": 31,"maxMp": 0,"str": 10,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "戦士","jobHistory": {"戦士": 0},"accessories": []},
-{"name": "キメラ","level": 2,"hp": 49,"mp": 15,"exp": 40,"maxHp": 49,"maxMp": 15,"str": 20,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "タロス","level": 2,"hp": 65,"mp": 0,"exp": 44,"maxHp": 65,"maxMp": 0,"str": 22,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "黒魔道士","jobHistory": {"黒魔道士": 0},"accessories": []},
-{"name": "ストーンゴーレム","level": 2,"hp": 80,"mp": 0,"exp": 50,"maxHp": 80,"maxMp": 0,"str": 24,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "ミミック","level": 3,"hp": 15,"mp": 0,"exp": 300,"maxHp": 15,"maxMp": 0,"str": 30,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "黒魔道士","jobHistory": {"黒魔道士": 0},"accessories": []},
-{"name": "ドラゴン","level": 3,"hp": 70,"mp": 30,"exp": 80,"maxHp": 70,"maxMp": 30,"str": 28,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "白魔道士","jobHistory": {"白魔道士": 0},"accessories": []},
-{"name": "ゴーレム","level": 3,"hp": 120,"mp": 0,"exp": 90,"maxHp": 120,"maxMp": 0,"str": 32,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "デスナイト","level": 3,"hp": 140,"mp": 0,"exp": 100,"maxHp": 140,"maxMp": 0,"str": 34,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "デモンナイト","level": 3,"hp": 112,"mp": 25,"exp": 120,"maxHp": 112,"maxMp": 25,"str": 30,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "黒魔道士","jobHistory": {"黒魔道士": 0},"accessories": []},
-{"name": "アークデーモン","level": 3,"hp": 126,"mp": 0,"exp": 140,"maxHp": 126,"maxMp": 0,"str": 36,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "戦士","jobHistory": {"戦士": 0},"accessories": []},
-{"name": "ハイドラ","level": 4,"hp": 200,"mp": 0,"exp": 160,"maxHp": 200,"maxMp": 0,"str": 40,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "バアル","level": 4,"hp": 154,"mp": 60,"exp": 180,"maxHp": 154,"maxMp": 60,"str": 38,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "僧侶","jobHistory": {"僧侶": 0},"accessories": []},
-{"name": "ベリアル","level": 4,"hp": 210,"mp": 0,"exp": 300,"maxHp": 210,"maxMp": 0,"str": 42,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "戦士","jobHistory": {"戦士": 0},"accessories": []},
-{"name": "アスモデウス","level": 5,"hp": 280,"mp": 150,"exp": 500,"maxHp": 280,"maxMp": 150,"str": 50,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "ルシファー","level": 5,"hp": 350,"mp": 200,"exp": 800,"maxHp": 350,"maxMp": 200,"str": 60,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "僧侶","jobHistory": {"僧侶": 0},"accessories": []},
-{"name": "バフォメット","level": 5,"hp": 420,"mp": 250,"exp": 1000,"maxHp": 420,"maxMp": 250,"str": 65,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "ティアマト","level": 5,"hp": 490,"mp": 300,"exp": 1200,"maxHp": 490,"maxMp": 300,"str": 70,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "僧侶","jobHistory": {"僧侶": 0},"accessories": []},
-{"name": "シヴァ","level": 5,"hp": 560,"mp": 350,"exp": 1500,"maxHp": 560,"maxMp": 350,"str": 75,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "黒魔道士","jobHistory": {"黒魔道士": 0},"accessories": []},
-{"name": "ラミア","level": 5,"hp": 630,"mp": 400,"exp": 1800,"maxHp": 630,"maxMp": 400,"str": 80,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "白魔道士","jobHistory": {"白魔道士": 0},"accessories": []},
-{"name": "ヴァルプルギス","level": 5,"hp": 700,"mp": 450,"exp": 2000,"maxHp": 700,"maxMp": 450,"str": 85,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "魔法使い","jobHistory": {"魔法使い": 0},"accessories": []},
-{"name": "アヌビス","level": 5,"hp": 770,"mp": 500,"exp": 2200,"maxHp": 770,"maxMp": 500,"str": 90,"alive": true,"buffs": {"hp": 0,"mp": 0,"str": 0},"job": "僧侶","jobHistory": {"僧侶": 0},"accessories": []},
+{name: 'スライム', level: 1, hp: 100, mp: 100, exp: 50, maxHp: 150, maxMp: 150, str: 12, int: 2},
+{name: 'バンシー', level: 1, hp: 100, mp: 100, exp: 50, maxHp: 150, maxMp: 150, str: 12, int: 2},
+{name: 'コボルト', level: 1, hp: 100, mp: 100, exp: 50, maxHp: 150, maxMp: 150, str: 12, int: 2},
+{name: 'ゴブリン', level: 2, hp: 40, mp: 0, exp: 90, maxHp: 40, maxMp: 0, str: 12, int: 5},
+{name: 'バジリスク', level: 2, hp: 35, mp: 5, exp: 100, maxHp: 35, maxMp: 5, str: 14, int: 7},
+{name: 'ケルベロス', level: 2, hp: 30, mp: 0, exp: 110, maxHp: 30, maxMp: 0, str: 16, int: 6},
+{name: 'サイクロプス', level: 3, hp: 60, mp: 0, exp: 30, maxHp: 60, maxMp: 0, str: 18, int: 8},
+{name: 'リッチ', level: 3, hp: 50, mp: 0, exp: 28, maxHp: 50, maxMp: 0, str: 14, int: 12},
+{name: 'ウォーロック', level: 3, hp: 31, mp: 20, exp: 32, maxHp: 31, maxMp: 20, str: 10, int: 14},
+{name: 'キメラ', level: 4, hp: 49, mp: 15, exp: 40, maxHp: 49, maxMp: 15, str: 20, int: 10},
+{name: 'タロス', level: 4, hp: 65, mp: 0, exp: 44, maxHp: 65, maxMp: 0, str: 22, int: 8},
+{name: 'ストーンゴーレム', level: 4, hp: 80, mp: 0, exp: 50, maxHp: 80, maxMp: 0, str: 24, int: 6},
+{name: 'ミミック', level: 5, hp: 15, mp: 0, exp: 300, maxHp: 15, maxMp: 0, str: 30, int: 20},
+{name: 'ドラゴン', level: 5, hp: 70, mp: 30, exp: 80, maxHp: 70, maxMp: 30, str: 28, int: 18},
+{name: 'ゴーレム', level: 5, hp: 120, mp: 0, exp: 90, maxHp: 120, maxMp: 0, str: 32, int: 10},
+{name: 'デスナイト', level: 6, hp: 140, mp: 0, exp: 100, maxHp: 140, maxMp: 0, str: 34, int: 12},
+{name: 'デモンナイト', level: 6, hp: 112, mp: 25, exp: 120, maxHp: 112, maxMp: 25, str: 30, int: 16},
+{name: 'アークデーモン', level: 6, hp: 126, mp: 50, exp: 140, maxHp: 126, maxMp: 50, str: 36, int: 20},
+{name: 'ハイドラ', level: 7, hp: 200, mp: 0, exp: 160, maxHp: 200, maxMp: 0, str: 40, int: 14},
+{name: 'バアル', level: 7, hp: 154, mp: 60, exp: 180, maxHp: 154, maxMp: 60, str: 38, int: 22},
+{name: 'ベリアル', level: 8, hp: 210, mp: 100, exp: 300, maxHp: 210, maxMp: 100, str: 42, int: 28},
+{name: 'アスモデウス', level: 9, hp: 280, mp: 150, exp: 500, maxHp: 280, maxMp: 150, str: 50, int: 30},
+{name: 'ルシファー', level: 10, hp: 350, mp: 200, exp: 800, maxHp: 350, maxMp: 200, str: 60, int: 40},
+{name: 'バフォメット', level: 10, hp: 420, mp: 250, exp: 1000, maxHp: 420, maxMp: 250, str: 65, int: 45},
+{name: 'ティアマト', level: 10, hp: 490, mp: 300, exp: 1200, maxHp: 490, maxMp: 300, str: 70, int: 50},
+{name: 'シヴァ', level: 10, hp: 560, mp: 350, exp: 1500, maxHp: 560, maxMp: 350, str: 75, int: 55},
+{name: 'ラミア', level: 10, hp: 630, mp: 400, exp: 1800, maxHp: 630, maxMp: 400, str: 80, int: 60},
+{name: 'ヴァルプルギス', level: 10, hp: 700, mp: 450, exp: 2000, maxHp: 700, maxMp: 450, str: 85, int: 65},
+{name: 'アヌビス', level: 10, hp: 770, mp: 500, exp: 2200, maxHp: 770, maxMp: 500, str: 90, int: 70},
 ];
+
 let heroes = [];
 let enemies = [];
 
@@ -237,6 +238,12 @@ let INVENTORY = { // INVENTORYを定義（オブジェクト型、SPELLSと同�
     } },
 };
 
+
+
+
+
+
+
 // アクセサリのデータ構造
 const ACCESSORY_LIST = [
     { name: '力の指輪', buff: 'str', value: 10, apply_type: 'add' },
@@ -271,7 +278,8 @@ function equipAccessory(hero, accessory) {
     logWrite(`${hero.name}は「${accessory.name}」を装備しました！`);
 }
 
-function showAccessorySelection(droppedAccessories) { // 戦闘終了時にアクセサリを選択して装備
+// 戦闘終了時にアクセサリを選択して装備
+function showAccessorySelection(droppedAccessories) {
     console.log(droppedAccessories);
     actions.innerHTML = `<strong>ドロップしたアクセサリを装備してください:</strong>`;
     droppedAccessories.forEach((accessory, index) => {
@@ -305,14 +313,16 @@ function showAccessorySelection(droppedAccessories) { // 戦闘終了時にア�
     actions.appendChild(skipButton);
 }
 
-function startBattle(enemyCount = 2) { // 戦闘開始時に全キャラクターのアクセサリ効果を適用
+// 戦闘開始時に全キャラクターのアクセサリ効果を適用
+function startBattle(enemyCount = 2) {
     initializeGame();
     const clearLog = () => log.innerHTML = ''; // ログをクリアする関数
     clearLog();
     spawnEnemies(enemyCount);
     logWrite(`敵が${enemies.length}体あらわれた！（戦闘回数: ${battleCount}）`);
     updateEnemies();
-    function applyAccessoryEffects(hero) { // 戦闘開始時にアクセサリの効果を適用
+    // 戦闘開始時にアクセサリの効果を適用
+    function applyAccessoryEffects(hero) {
         if (hero.accessories) {
             hero.accessories.forEach(accessory => {
                 applyBattleBuff(hero, accessory.buff, accessory.apply_type, accessory.value);
@@ -380,25 +390,38 @@ function showHeroActionSelection() {
     atkButton.onclick = () => {showEnemySelectionForAttack(hero)};
     actions.appendChild(atkButton);
 
+    // 全員戦うボタンを追加 (testがtrueの時のみ表示)
     if (test) {
         const allAtkButton = document.createElement('button');
         allAtkButton.textContent = '全員戦う';
-        allAtkButton.onclick = () => {allHeroesAttack()};
+        allAtkButton.onclick = () => {
+            allHeroesAttack();
+        };
         actions.appendChild(allAtkButton);
-    } // 全員戦うボタンを追加 (testがtrueの時のみ表示)
+    }
 
-    Object.entries(SPELLS).forEach(([key, sp]) => { // 通常スペルの表示
+    // 通常スペルの表示
+    Object.entries(SPELLS).forEach(([key, sp]) => {
         if (hero.mp >= sp.cost) {
             const spellButton = document.createElement('button');
             spellButton.textContent = sp.name; // 日本語名を表示
             spellButton.onclick = () => {
                 // ターゲット選択が必要な場合は選択UIを表示
                 if (sp.range === 'single') {
+                    // --- ここを修正 ---
+                    // 回復系は味方、攻撃系は敵、その他は両方
                     let targets = [];
+                    if (sp.type === 'heal') {
+                        targets = heroes.filter(h => h.alive);
+                    } else if (sp.type === 'dmg') {
+                        targets = enemies.filter(e => e.alive);
+                    } else {
+                        // buffやotherなどは味方も敵も選択肢に
                         targets = [
                             ...heroes.filter(h => h.alive),
                             ...enemies.filter(e => e.alive)
-                        ]; // buffやotherなどは味方も敵も選択肢に
+                        ];
+                    }
                     actions.innerHTML = `<strong>対象を選択してください:</strong>`;
                     targets.forEach(target => {
                         const targetButton = document.createElement('button');
@@ -410,12 +433,12 @@ function showHeroActionSelection() {
                         };
                         actions.appendChild(targetButton);
                     });
+                    // 戻るボタン
                     const backButton = document.createElement('button');
-                    backButton.textContent = '戻る'; // 戻るボタン
+                    backButton.textContent = '戻る';
                     backButton.onclick = () => showHeroActionSelection();
                     actions.appendChild(backButton);
-                }
-                if (sp.range === 'all'|| sp.range === null) { // 範囲がallまたはnullの場合は全体魔法
+                } else {
                     // 全体魔法や特殊スペルは即実行
                     actionsQueue.push({ hero, action: 'spell', spell: key, target: null });
                     currentHeroIndex++;
@@ -434,7 +457,8 @@ function showHeroActionSelection() {
                 const spellButton = document.createElement('button');
                 spellButton.textContent = sp.name; // 日本語名を表示
                 spellButton.onclick = () => {
-                    if (sp.range === 'single' && !sp.effect) { // effectがある場合はtargetをnullにする
+                    // effectがある場合はtargetをnullにする
+                    if (sp.range === 'single' && !sp.effect) {
                         const targets = sp.type === 'heal'
                             ? heroes.filter(h => h.alive)
                             : enemies.filter(e => e.alive);
@@ -449,8 +473,9 @@ function showHeroActionSelection() {
                             };
                             actions.appendChild(targetButton);
                         });
+                        // 戻るボタン
                         const backButton = document.createElement('button');
-                        backButton.textContent = '戻る'; // 戻るボタン
+                        backButton.textContent = '戻る';
                         backButton.onclick = () => showHeroActionSelection();
                         actions.appendChild(backButton);
                     } else {
@@ -464,7 +489,9 @@ function showHeroActionSelection() {
         });
     }
 
-    if (Object.keys(INVENTORY).length > 0) {    // INVENTORYオブジェクトの数が0以上の時のみアイテムボタンを表示
+    // if (INVENTORY.length > 0) {
+    // INVENTORYオブジェクトの数が0以上の時のみアイテムボタンを表示
+    if (Object.keys(INVENTORY).length > 0) {
         const itemButton = document.createElement('button');
         itemButton.textContent = 'アイテム';
         function showItemSelection(hero) {
@@ -473,7 +500,10 @@ function showHeroActionSelection() {
             Object.entries(INVENTORY).forEach(([itemKey, item]) => {
                 const itemButton = document.createElement('button');
                 itemButton.textContent = item.name;
-                itemButton.onclick = () => useItem(hero, itemKey); // ← 修正: index→itemKey
+                // itemButton.onclick = () => useItem(hero, index);
+                // itemButton.onclick = () => useFooBar(hero, index); // useItemをuseFooBarに変更
+                // itemButton.onclick = () => useBuz(hero, index); // useItemをuseBuzに変更
+                itemButton.onclick = () => useBuz(hero, itemKey); // ← 修正: index→itemKey
                 actions.appendChild(itemButton);
             });
 
@@ -521,8 +551,10 @@ function spawnEnemies(count = 3) {
 
     for (let i = 0; i < count; i++) {
         const e = JSON.parse(JSON.stringify(candidates[rand(0, candidates.length - 1)]));
-
+        e.maxHp = e.hp;
+        e.alive = true;
         e.id = i;
+        e.buffs = { hp: 0, mp: 0, str: 0 }; // 戦闘中の補正値
         enemies.push(e);
     }
 }
@@ -842,6 +874,8 @@ function visitInn() {
 
 const calculateExpForLevel = (level) => Math.floor(50 * Math.pow(1.5, level - 1)); // レベルアップに必要な経験値を計算
 
+
+
 function giveExp() {
     function resetBuffs() {
         heroes.forEach(hero => {hero.buffs = { hp: 0, mp: 0, str: 0 }});
@@ -888,38 +922,59 @@ function dropItems(enemyCount) { // 敵の数かけるVOLUME_DROPSのdrop
     }
 }
 
-function useItem(hero, spellKey) {
+
+
+// useBuz: INVENTORYからスペルを1回使って消費する関数
+function useBuz(hero, spellKey) {
     const spell = INVENTORY[spellKey];
     if (!spell) return;
-    if (spell.range === null) {
-        spell.effect(null, hero); // 範囲がnullの場合はターゲットなしで実行
+
+    // effectプロパティがあればそれを実行
+    if (typeof spell.effect === 'function') {
+        if (spell.range === 'all') {
+            console.log(1);
+            spell.effect(target = null, hero);
+        } else if (spell.range === 'single') {
+            // 単体対象はUIで選択
+            actions.innerHTML = `<strong>対象を選択してください:</strong>`;
+            let targets = [];
+            if (spell.type === 'heal' || spell.type === 'buff') {
+                targets = heroes.filter(h => h.alive);
+            } else {
+                targets = enemies.filter(e => e.alive);
+            }
+            targets.forEach(target => {
+                const btn = document.createElement('button');
+                btn.textContent = target.name;
+                btn.onclick = () => {
+                    spell.effect(target, hero);
+                    delete INVENTORY[spellKey];
+                    showHeroActionSelection();
+                };
+                actions.appendChild(btn);
+            });
+            // 戻るボタン
+            const backButton = document.createElement('button');
+            backButton.textContent = '戻る';
+            backButton.onclick = () => showHeroActionSelection();
+            actions.appendChild(backButton);
+            return;
+        } else {
+            spell.effect(null, hero);
+        }
+        console.log(2);
+        delete INVENTORY[spellKey];
+                    console.log(3);
+        showHeroActionSelection();
+                    console.log(4);
+        updateStats();updateEnemies();
+                    console.log(5);
+
     }
-    if (spell.range === 'all') {
-        spell.effect(target = null, hero);
-    } 
-    if (spell.range === 'single') {
-        actions.innerHTML = `<strong>対象を選択してください:</strong>`;
-        let targets = []; // 単体対象はUIで選択
-        targets.forEach(target => {
-            const btn = document.createElement('button');
-            btn.textContent = target.name;
-            btn.onclick = () => {
-                spell.effect(target, hero);
-                delete INVENTORY[spellKey];
-                showHeroActionSelection();
-            };
-            actions.appendChild(btn);
-        });
-        const backButton = document.createElement('button');
-        backButton.textContent = '戻る';            // 戻るボタン
-        backButton.onclick = () => showHeroActionSelection();
-        actions.appendChild(backButton);
-        return;
-    }
-    delete INVENTORY[spellKey];
-    showHeroActionSelection();
-    updateStats();updateEnemies();
-} // useItem: INVENTORYからスペルを1回使って消費する関数
+    // 全てのスペルを今後effectプロパティを持つようにするので、ここは不要
+    // 表示のアップデート
+
+}
 
 function showTargetSelection(hero, item, itemIndex) {
     actions.innerHTML = `<strong>対象を選択してください:</strong>`;
@@ -1013,33 +1068,15 @@ function showInnOrTemple() {
 function addAlly(enemyName) {
     const defeatedEnemy = enemies.find(e => e.name === enemyName);
     if (!defeatedEnemy) return;
-    function become_hero_from_enemy(enemy) {
-        return {
-            // job, level, jobHistory, accessoriesは敵のENEMY_LISTから流用
-            name: enemy.name,
-            job: ENEMY_LIST.find(e => e.name === enemy.name).job, // 敵のジョブを取得
-            jobHistory: ENEMY_LIST.find(e => e.name === enemy.name).jobHistory || {}, // ジョブ履歴を敵のものから取得
-            accessories: ENEMY_LIST.find(e => e.name === enemy.name).accessories || [], // アクセサリを敵のものから取得
-            hp: enemy.hp,
-            maxHp: enemy.maxHp,
-            mp: enemy.mp,
-            maxMp: enemy.maxMp,
-            level: ENEMY_LIST.find(e => e.name === enemy.name).level, // 敵のレベルを取得
-            exp: 0, // 初期経験値は0
-            buffs: { hp: 0, mp: 0, str: 0 }, // バフの初期化
-            alive: true, // 生存状態
-            jobHistory: ENEMY_LIST.find(e => e.name === enemy.name).jobHistory || {}, // ジョブ履歴を敵のものから取得
-        };
-    }
-    const hero = become_hero_from_enemy(defeatedEnemy); // 敵を仲間にする
+    const hero = createHero(defeatedEnemy.name, '戦士'); // 戦士として味方に追加
     hero.hp = hero.maxHp; // HPを全回復
     hero.mp = hero.maxMp; // MPを全回復
+    hero.learnedSpells = []; // スペルは未習得
     heroes.push(hero);
     logWrite(`${defeatedEnemy.name}が味方になりました！`);
     actions.innerHTML = ''; // 選択画面を消す
     showInnOrTemple(); // 次の行動選択画面を表示
 }
-
 function rejectAlly(enemyName) {
     logWrite(`${enemyName}を仲間にするのを断りました。`);
     actions.innerHTML = ''; // 選択画面を消す
@@ -1070,6 +1107,8 @@ function convertEnemyToAlly(defeatedEnemies) {
         showInnOrTemple(); // 仲間にできない場合は宿屋や神殿の選択肢を表示
     }
 }
+
+
 
 function applyBattleBuff(hero, stat, apply_type='add', value) {
     if (hero.buffs[stat] == undefined) {
