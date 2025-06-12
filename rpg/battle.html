@@ -126,6 +126,7 @@ const test = false;
   </div>
 
 <script src="./spell.js"></script>
+<!-- <script src="./untested_spell.js"></script> -->
 <script src="./spell_test.js"></script>
 <script>
 let seed = 45;
@@ -136,10 +137,8 @@ function rand(min, max) {
 
 let JOBS = {
     戦士: { hp: 80, mp: 0 },
-    僧侶: { hp: 60, mp: 20 },
-    魔法使い: { hp: 50, mp: 30 },
-    黒魔道士: { hp: 40, mp: 40 },
-    白魔道士: { hp: 50, mp: 30 },
+    白魔法士: { hp: 60, mp: 20 },
+    黒魔道士: { hp: 50, mp: 30 },
 };
 let JOB_GROWTH = {
     戦士: { maxHp: [5, 10], maxMp: [0, 0] },
@@ -650,8 +649,21 @@ function nextTurn() {
     }
 
     if (!enemies.some(e => e.alive)) {
-      giveExp();
-      return;
+        function showEnding() {
+            actions.innerHTML = `
+            <h2>エンディング</h2>
+            <p>勇者たちはすべての敵を倒し、世界に平和を取り戻しました。</p>
+            <button onclick="location.reload()">もう一度プレイする</button>`;
+            logWrite('<strong>ゲームクリア！おめでとうございます！</strong>');
+        }
+        // 最大レベルの敵を倒した場合showEnding
+        const maxEnemyLevel = Math.max(...enemies.map(e => e.level));
+        if (maxEnemyLevel >= MAX_ENEMY_LEVEL) {
+            showEnding();
+            return;
+        }
+        giveExp();
+        return;
     }
 
     if (isEnemyTurn) {
@@ -752,38 +764,8 @@ function castSpell(hero, spell, target) {
             (sp.type === 'heal' ? heroes.filter(h => h.alive) : enemies.filter(e => e.alive))
                 .forEach(t => applySpellEffect(hero, spell, sp, t));
             break;
-        case sp.type === 'heal':
-            const healTarget = heroes.filter(h => h.alive).sort((a, b) => a.hp - b.hp)[0];
-            healTarget && applySpellEffect(hero, spell, sp, healTarget);
-            break;
-        case sp.type === 'dmg':
-            const dmgTarget = enemies.filter(e => e.alive).sort((a, b) => a.hp - b.hp)[0];
-            dmgTarget && applySpellEffect(hero, spell, sp, dmgTarget);
-            break;
-        case sp.type === 'debuff':
-            const debuffTarget = enemies.filter(e => e.alive).sort((a, b) => b.hp - a.hp)[0];
-            debuffTarget && applySpellEffect(hero, spell, sp, debuffTarget);
-            break;
         default:
             applySpellEffect(hero, spell, sp, target);
-    }
-}
-
-function applySpellEffect(hero, spellName, sp, target) {
-    if (sp.type === 'heal') {
-        const healAmount = rand(...sp.val);
-        target.hp = Math.min(target.maxHp, target.hp + healAmount);
-        logWrite(`${hero.name}は${spellName}を唱えた！${target.name}のHPが${healAmount}回復した！`);
-    } 
-    if (sp.type === 'dmg') {
-        const dmg = rand(...sp.val); // スペルのダメージをそのまま使用
-        target.hp -= dmg;
-        logWrite(`${hero.name}は${spellName}を唱えた！${target.name}に${dmg}ダメージ！`);
-        if (target.hp <= 0) {
-            target.alive = false;
-            target.hp = 0;
-            logWrite(`${target.name}を倒した！`);
-        }
     }
 }
 
@@ -879,9 +861,6 @@ function giveExp() {
             logWrite(`${hero.name}はLv${hero.level}に上がった！`);
         }
     });
-
-
-
     const droppedAccessories = dropAccessories(enemies.length); // アクセサリをドロップ
     console.log(droppedAccessories);
     droppedAccessories.length > 0 ? showAccessorySelection(droppedAccessories) : accessories_fn(); // アクセサリがドロップされた場合は選択画面を表示
@@ -959,13 +938,6 @@ function showTargetSelection(hero, item, itemIndex) {
     actions.appendChild(backButton);
 }
 
-function showEnding() {
-    actions.innerHTML = `
-      <h2>エンディング</h2>
-      <p>勇者たちはすべての敵を倒し、世界に平和を取り戻しました。</p>
-      <button onclick="location.reload()">もう一度プレイする</button>`;
-    logWrite('<strong>ゲームクリア！おめでとうございます！</strong>');
-}
 
 function visitTrainingGround() {
     function showSkillOptions(heroIndex) {
