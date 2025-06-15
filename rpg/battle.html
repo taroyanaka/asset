@@ -1,6 +1,13 @@
 <!DOCTYPE html>
-2
+4
 <!-- 自動で探索するテストコードの方針
+
+$$("button")[0].textContent === 'たたかう' ? $$("button")[0].click() : 'error';
+$$("strong")[0].textContent.includes("攻撃する敵") ? $$("button")[0].click() : 'error';
+$$("strong")[0].textContent.includes("行動を選択") ? $$("button")[0].click() : 'error';
+$$("strong")[0].textContent.includes("アクセサリを装備") ? $$("button")[0].click() : 'error';
+$$("strong")[0].textContent.includes("味方になりたそうに") ? $$("button")[0].click() : 'error';
+
  全自動の際は クリア不可 中間 クリア簡単 のグラデーションを作るようなエネミーリストを複数用意する
     全部戦う選択=>休憩選択肢を全て組み合わせ選択=>全部戦う　繰り返し で全クリできるか
     全部任意(orランダム選択)スペル(mp切れの際は戦う) => 休憩選択肢を全て組み合わせ選択 => 繰り返し　で全クリできるか
@@ -142,10 +149,8 @@ let JOBS = {
 };
 let JOB_GROWTH = {
     戦士: { maxHp: [5, 10], maxMp: [0, 0] },
-    僧侶: { maxHp: [3, 6], maxMp: [3, 6] },
-    魔法使い: { maxHp: [2, 5], maxMp: [4, 8] },
-    黒魔道士: { maxHp: [0, 0], maxMp: [7, 12] },
-    白魔道士: { maxHp: [0, 0], maxMp: [6, 10] },
+    白魔法士: { maxHp: [3, 6], maxMp: [3, 6] },
+    黒魔道士: { maxHp: [2, 5], maxMp: [4, 8] },
 };
 
 let HP_MULTIPLIER = test ? 0.1 : 1; // HP倍率 test===trueの時はhpを0.1倍でexpを100倍(1行で)
@@ -153,8 +158,8 @@ let EXP_MULTIPLIER = test ? 100 : 1; // 経験値倍率 test===trueの時はhp�
 let INITIAL_HEROES_VOLUME = 3; // 初期ヒーローの数
 let INITIAL_HEROES = [
     // ['サトウ', '戦士'],
-    ['スズキ', '魔法使い'],
-    ['タナカ', '僧侶'],
+    ['タナカ', '白魔法士'],
+    ['スズキ', '黒魔道士'],
 ]; // 初期のヒーローの名前と職業を決めるテーブル
 let ENEMY_MORE_VOLUME = 3; // 敵の出現数の増加数
 let ENEMY_ARRAY_VOLUME = 3; // 敵の出現数の配列
@@ -235,8 +240,6 @@ let INVENTORY = { // INVENTORYを定義（オブジェクト型、SPELLSと同�
     tradeHpMpAll: { name: '全員変換', cost: 0, type: 'other', range: 'all', val: [0, 0], requiredJobs: { 戦士: 2, 僧侶: 2 },
     effect: (target, source) => {
         console.log("INVENTORY tradeHpMpAll effect called");
-        // 味方全員のHPとMPを入れ替えるスペル
-        // target.forEach(hero => {
         heroes.forEach(hero => {
             const tempHp = hero.hp;
             hero.hp = hero.mp;
@@ -245,15 +248,6 @@ let INVENTORY = { // INVENTORYを定義（オブジェクト型、SPELLSと同�
         });
     } },
 };
-
-// アクセサリのデータ構造
-const ACCESSORY_LIST = [
-    { name: '力の指輪', buff: 'str', value: 10, apply_type: 'add' },
-    { name: '守りのペンダント', buff: 'hp', value: 20, apply_type: 'add' },
-    { name: '魔力のイヤリング', buff: 'mp', value: 15, apply_type: 'add' },
-    { name: '攻撃の腕輪', buff: 'str', value: 0.2, apply_type: 'multiply' },
-    { name: '生命の指輪', buff: 'hp', value: 0.1, apply_type: 'multiply' },
-];
 
 // 戦闘終了時にアクセサリをドロップ
 function dropAccessories(enemyCount) {
@@ -314,6 +308,14 @@ function showAccessorySelection(droppedAccessories) { // 戦闘終了時にア�
     actions.appendChild(skipButton);
 }
 
+const ACCESSORY_LIST = [
+    { name: '力の指輪', effect: (hero) => { hero.buffs.str += 10; logWrite(`${hero.name}の力が+10された！`); } },
+    { name: '守りのペンダント', effect: (hero) => { hero.buffs.hp += 20; logWrite(`${hero.name}のHPが+20された！`); } },
+    { name: '魔力のイヤリング', effect: (hero) => { hero.buffs.mp += 15; logWrite(`${hero.name}のMPが+15された！`); } },
+    { name: '攻撃の腕輪', effect: (hero) => { const add = Math.floor((hero.maxHp * STR_PERCENTAGE) * 0.2); hero.buffs.str += add; logWrite(`${hero.name}の力が+${add}（20%分）された！`); } },
+    { name: '生命の指輪', effect: (hero) => { const add = Math.floor(hero.maxHp * 0.1); hero.buffs.hp += add; logWrite(`${hero.name}のHPが+${add}（10%分）された！`); } },
+];
+
 function startBattle(enemyCount = 2) { // 戦闘開始時に全キャラクターのアクセサリ効果を適用
     initializeGame();
     const clearLog = () => log.innerHTML = ''; // ログをクリアする関数
@@ -321,15 +323,17 @@ function startBattle(enemyCount = 2) { // 戦闘開始時に全キャラクタ�
     spawnEnemies(enemyCount);
     logWrite(`敵が${enemies.length}体あらわれた！（戦闘回数: ${battleCount}）`);
     updateEnemies();
-    function applyAccessoryEffects(hero) { // 戦闘開始時にアクセサリの効果を適用
+    function applyAccessoryEffects(hero) {
         if (hero.accessories) {
             hero.accessories.forEach(accessory => {
-                applyBattleBuff(hero, accessory.buff, accessory.apply_type, accessory.value);
+                if (typeof accessory.effect === 'function') {
+                    accessory.effect(hero);
+                }
             });
         }
-    }
-    heroes.forEach(hero => applyAccessoryEffects(hero)); // アクセサリ効果を適用
-    isEnemyTurn = false; // プレイヤーのターンから開始
+    } // アクセサリ効果を適用（effect関数で処理）
+    heroes.forEach(hero => applyAccessoryEffects(hero));
+    isEnemyTurn = false;
     nextTurn();
 }
 
@@ -645,7 +649,14 @@ function nextTurn() {
     actions.innerHTML = '';
 
     if (!heroes.some(h => h.alive)) {
-      logWrite('全滅…ゲームオーバー');
+        // 全滅した場合リロードボタンを表示して初期画面にできるようにする
+        const showGameOverScreen = () =>{
+            actions.innerHTML = `
+            <h2>ゲームオーバー</h2>
+            <p>全滅しました。もう一度プレイしますか？</p>
+            <button onclick="location.reload()">もう一度プレイ</button>`;
+            logWrite('<strong>全滅…ゲームオーバー</strong>');
+        };
       return;
     }
 
@@ -658,8 +669,9 @@ function nextTurn() {
             logWrite('<strong>ゲームクリア！おめでとうございます！</strong>');
         }
         // 最大レベルの敵を倒した場合showEnding
+        // 出現した敵のレベルを確認し、それがENEMY_LISTの最大レベルと一致する場合にエンディングを表示
         const maxEnemyLevel = Math.max(...enemies.map(e => e.level));
-        if (maxEnemyLevel >= MAX_ENEMY_LEVEL) {
+        if (maxEnemyLevel >= Math.max(...ENEMY_LIST.map(e => e.level))) {
             showEnding();
             return;
         }
@@ -813,8 +825,6 @@ function enemyTurn() {
     isEnemyTurn = false; // 敵のターンが終わったら味方のターンに移行
     nextTurn();
 }
-
-const showGameOverScreen = () => {actions.innerHTML = `<button onclick="location.reload()">リスタート</button>`; logWrite('<strong>全滅…ゲームオーバー</strong>')};
 
 function visitInn() {
     heroes = heroes.map(hero => {
@@ -1050,21 +1060,6 @@ function convertEnemyToAlly(defeatedEnemies) {
             `; // 選択画面を表示
     }else{
         showInnOrTemple(); // 仲間にできない場合は宿屋や神殿の選択肢を表示
-    }
-}
-
-function applyBattleBuff(hero, stat, apply_type='add', value) {
-    if (hero.buffs[stat] == undefined) {
-        logWrite(`無効なステータス: ${stat}`);
-        return;
-    }
-    if (apply_type === 'add') {
-        hero.buffs[stat] += value;
-        logWrite(`${hero.name}の${stat}が${value > 0 ? '+' : ''}${value}されました！`);
-    } 
-    if (apply_type === 'multiply') {
-        hero.buffs[stat] += Math.floor(hero[stat] + hero.buffs[stat]) * value;
-        logWrite(`${hero.name}の${hero[stat]}が${Math.floor(hero[stat] + hero.buffs[stat]) * value}${value}されました！`);
     }
 }
 
