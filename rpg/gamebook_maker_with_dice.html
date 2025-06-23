@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ゲームブック作成アプリ</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .node-list { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .node-button {
+      padding: 10px;
+      background: #ccc;
+      border: 1px solid #999;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .node-button.active { background: #88f; color: white; }
+    .editor, .play-view, .graph-view {
+      border: 1px solid #aaa;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    textarea { width: 100%; height: 4em; }
+    input { width: 100%; margin-bottom: 5px; }
+    .btn { padding: 5px 10px; margin: 5px; }
+    .end { background: #ffe0e0; padding: 10px; margin-top: 10px; border-radius: 5px; }
+    .danger { color: red; font-weight: bold; cursor: pointer; margin-left: 5px; }
+    .graph-view { background: #f9f9f9; }
+    .graph-view ul { padding-left: 1.5em; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <template v-if="playMode">
+      <div class="play-view">
+        <!-- <h2>プレイモード</h2> -->
+         <!-- ダイスロールボタン クリックすると2から12の数値を表示 -->
+          <button @click="diceResult = Math.floor(Math.random() * 11) + 2" class="btn">ダイスを振る</button>
+          <div v-if="diceResult !== null" style="margin:8px 0;">ダイス結果: <strong>{{ diceResult }}</strong></div>
+
+
+        <div v-if="playingNode">
+          <p>{{ playingNode.text }}</p>
+          <div v-if="playingNode.imageUrl" style="margin: 10px 0;">
+            <img :src="playingNode.imageUrl" alt="ノード画像" style="max-width: 300px; max-height: 200px; border:1px solid #ccc; border-radius:4px;" />
+          </div>
+          <div v-if="!playingNode.choices[0].next && !playingNode.choices[1].next" class="end">エンディング</div>
+          <div v-if="hasDiceBranch(playingNode)">
+            <button @click="rollDiceForNode" class="btn">ダイスで分岐</button>
+            <div v-if="diceResult !== null" style="margin:8px 0;">ダイス結果: <strong>{{ diceResult }}</strong></div>
+          </div>
+          <div v-else>
+            <div v-for="(choice, i) in playingNode.choices" v-if="choice.text && choice.next != null">
+              <button @click="goTo(choice.next)" class="btn">{{ choice.text }}</button>
+            </div>
+          </div>
+        </div>
+        <button @click="resetPlay" class="btn">最初に戻る</button>
+      </div>
+    </template>
+
+    <template v-else>
+      <h1>ゲームブック作成ツール</h1>
+
+      <div class="node-list">
+        <div v-for="node in nodes" :key="node.id"
+             :class="['node-button', { active: currentNodeId === node.id }]"
+             @click="currentNodeId = node.id">
+          ノード {{ node.id }}
+          <span v-if="node.id !== 0" class="danger" @click.stop="deleteNode(node.id)">×</span>
+        </div>
+        <div class="node-button" @click="addNode">＋</div>
+        <!-- findUnreachableNodes -->
+        <div v-if="findUnreachableNodes(nodes).length > 0" class="danger">
+          到達不可能なノード: {{ findUnreachableNodes(nodes).join(', ') }}
+          <span class="danger" @click="findUnreachableNodes(nodes).forEach(id => deleteNode(id))">削除</span>
+        </div>
+      </div>
+
+      <div class="editor" v-if="currentNode">
+        <h2>ノード編集 (ID: {{ currentNode.id }})</h2>
+        <div>
+          <label>テキスト:</label>
+          <textarea v-model="currentNode.text"></textarea>
+        </div>
+        <div>
+          <label>画像URL (png推奨):</label>
+          <input v-model="currentNode.imageUrl" placeholder="例: https://example.com/sample.png" />
+          <div v-if="currentNode.imageUrl" style="margin-top:5px;">
+            <img :src="currentNode.imageUrl" alt="ノード画像" style="max-width:200px; max-height:150px; border:1px solid #ccc; border-radius:4px;" />
+          </div>
+        </div>
+        <div>
+          <label>選択肢1:</label>
+          <input v-model="currentNode.choices[0].text" placeholder="テキスト" />
+          <input v-model.number="currentNode.choices[0].next" type="number" placeholder="遷移先ID" />
+          <div style="display:flex;gap:4px;align-items:center;">
+            <label style="margin:0;">minDice:</label>
+            <input v-model.number="currentNode.choices[0].minDice" type="number" min="2" max="12" style="width:60px;" placeholder="2" />
+            <label style="margin:0;">maxDice:</label>
+            <input v-model.number="currentNode.choices[0].maxDice" type="number" min="2" max="12" style="width:60px;" placeholder="12" />
+            <span style="font-size:12px;color:#888;">(2d6分岐用)</span>
+          </div>
+        </div>
+        <div>
+          <label>選択肢2:</label>
+          <input v-model="currentNode.choices[1].text" placeholder="テキスト" />
+          <input v-model.number="currentNode.choices[1].next" type="number" placeholder="遷移先ID" />
+          <div style="display:flex;gap:4px;align-items:center;">
+            <label style="margin:0;">minDice:</label>
+            <input v-model.number="currentNode.choices[1].minDice" type="number" min="2" max="12" style="width:60px;" placeholder="2" />
+            <label style="margin:0;">maxDice:</label>
+            <input v-model.number="currentNode.choices[1].maxDice" type="number" min="2" max="12" style="width:60px;" placeholder="12" />
+            <span style="font-size:12px;color:#888;">(2d6分岐用)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-view">
+        <h2>ノードマップ</h2>
+        <div v-for="node in nodes" :key="'map-'+node.id" style="margin-bottom:12px;">
+          <strong>ノード {{ node.id }}</strong>: {{ node.text || '（テキスト未設定）' }}
+          <div v-if="node.imageUrl" style="margin: 4px 0;">
+            <img :src="node.imageUrl" alt="ノード画像" style="max-width: 100px; max-height: 60px; border:1px solid #ccc; border-radius:3px;" />
+          </div>
+          <ul>
+            <li v-for="(choice, i) in node.choices">
+              {{ choice.text || '（選択肢なし）' }} →
+              <span :style="{ color: isValidLink(choice.next) ? 'black' : 'red' }">
+                {{ choice.next !== null ? 'ノード ' + choice.next : '（未設定）' }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <button @click="playMode = true" class="btn">プレイ</button>
+        <button @click="exportJSON" class="btn">JSON出力</button>
+        <button @click="loadSample(1)" class="btn">サンプル1</button>
+
+        <input type="file" accept=".json" @change="importJSON" class="btn" style="padding:5px 10px;" />
+      </div>
+    </template>
+  </div>
+
+  <script>
+    new Vue({
+      el: "#app",
+      data: {
+        nodes: [],
+        currentNodeId: 0,
+        playMode: false,
+        playingNodeId: 0,
+        nextId: 1,
+        diceResult: null
+      },
+      computed: {
+        currentNode() {
+          return this.nodes.find(n => n.id === this.currentNodeId);
+        },
+        playingNode() {
+          return this.nodes.find(n => n.id === this.playingNodeId);
+        }
+      },
+      methods: {
+        addNode() {
+          this.nodes.push({
+            // 最大のidに1を足した値を新しいノードのidとする
+            id: this.nodes.reduce((max, n) => (n.id > max ? n.id : max), 0) + 1,
+            text: '',
+            imageUrl: '',
+            choices: [
+              { text: '', next: null },
+              { text: '', next: null }
+            ]
+          });
+        },
+        deleteNode(id) {
+          if (id === 0) return;
+          this.nodes = this.nodes.filter(n => n.id !== id);
+          if (this.currentNodeId === id) {
+            this.currentNodeId = 0;
+          }
+        },
+        goTo(id) {
+          this.playingNodeId = id;
+          this.diceResult = null; // ダイス結果をリセット
+        },
+resetPlay() {
+  if (new URLSearchParams(window.location.search).get('play') === 'true') {
+    // ?play=true の時はプレイ画面の最初のノードに戻るだけ
+    this.playingNodeId = 1;
+  } else {
+    // 通常モードなら編集画面に戻す
+    this.playMode = false;
+    this.playingNodeId = 1;
+  }
+},
+
+        exportJSON() {
+          const json = JSON.stringify(this.nodes, null, 2);
+          const blob = new Blob([json], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "gamebook.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        },
+        importJSON(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const json = JSON.parse(e.target.result);
+
+              // 簡易構造チェック
+              if (!Array.isArray(json)) throw new Error("JSONは配列である必要があります。");
+              for (const node of json) {
+                if (typeof node.id !== "number") throw new Error("ノードのidが不正です。");
+                if (typeof node.text !== "string") throw new Error("ノードのtextが不正です。");
+                if (node.imageUrl !== undefined && typeof node.imageUrl !== "string")
+                  throw new Error("imageUrlは文字列か未定義である必要があります。");
+                if (!Array.isArray(node.choices)) throw new Error("choicesは配列である必要があります。");
+                for (const choice of node.choices) {
+                  if (typeof choice.text !== "string")
+                    throw new Error("choice.textが不正です。");
+                  if (choice.next !== null && typeof choice.next !== "number")
+                    throw new Error("choice.nextはnullか数値である必要があります。");
+                }
+              }
+
+              this.nodes = json;
+              this.currentNodeId = this.nodes.length > 0 ? this.nodes[0].id : 0;
+              this.playingNodeId = 0;
+              this.nextId = this.nodes.reduce((max, n) => (n.id > max ? n.id : max), 0) + 1;
+
+              alert("JSON読み込み成功しました。");
+            } catch (err) {
+              alert("JSON読み込みエラー: " + err.message);
+            }
+          };
+          reader.readAsText(file);
+
+          event.target.value = "";
+        },
+        isValidLink(id) {
+          if (id === null || id === undefined) return true;
+          return this.nodes.some((n) => n.id === id);
+        },
+        loadSample(type = 1) {
+          const imgSampleUrl =
+            "https://raw.githubusercontent.com/taroyanaka/asset/refs/heads/main/image/sample_neuro.png";
+          const samples = {
+1: [
+    { id: 1, text: "渋谷の交差点で不思議なノイズを聞いた君は、その原因を探るか？", imageUrl: imgSampleUrl,
+      choices: [{ text: "探る", next: 5 }, { text: "やめる", next: 8 }] },
+    { id: 2, text: "路地裏に現れた謎の男に声をかけられる、話を聞くか？", imageUrl: imgSampleUrl,
+      choices: [{ text: "話を聞く", next: 11 }, { text: "無視する", next: 13 }] },
+    { id: 3, text: "信じるかどうかの気分をダイスロールで決める。（ダイスロール）2-6:1 10-12:5", imageUrl: imgSampleUrl,
+      choices: [{ text: "2-6", next: 1 }, { text: "10-12", next: 5 }] },
+    { id: 4, text: "コンビニで見知らぬUSBを拾った君は、家で中身を確認するか？", imageUrl: imgSampleUrl,
+      choices: [{ text: "確認する", next: 22 }, { text: "やめる", next: 25 }] },
+    { id: 5, text: "ノイズの発信源は地下鉄のホームか？探る？", imageUrl: imgSampleUrl,
+      choices: [{ text: "探る", next: 2 }, { text: "やめる", next: 4 }] },
+    { id: 6, text: "信じられないが...... （ダイスロール）2-6:30 7-9:32 10-12:34", imageUrl: imgSampleUrl,
+      choices: [{ text: "2-6", next: 30 }, { text: "7-9", next: 32 }, { text: "10-12", next: 34 }] },
+    { id: 7, text: "高校時代の友人・遥が「昨日見た夢が現実になってる」と言う。信じる？", imageUrl: imgSampleUrl,
+      choices: [{ text: "信じる", next: 3 }, { text: "信じない", next: 6 }] },
+    { id: 8, text: "ノイズを録音したスマホが熱を帯び始める。電源を切る？", imageUrl: imgSampleUrl,
+      choices: [{ text: "切る", next: 12 }, { text: "切らない", next: 14 }] },
+    { id: 9, text: "受け取った結果（ダイスロール）2-6:35 7-9:37 10-12:39", imageUrl: imgSampleUrl,
+      choices: [{ text: "2-6", next: 35 }, { text: "7-9", next: 37 }, { text: "10-12", next: 39 }] },
+    { id: 10, text: "君の部屋の鏡に「HELP」と書かれた手形。警察に連絡？", imageUrl: imgSampleUrl,
+      choices: [{ text: "連絡する", next: 20 }, { text: "連絡しない", next: 23 }] },
+    { id: 11, text: "男は「君には“視える力”がある」と言い、不思議なレンズを渡す。受け取る？", imageUrl: imgSampleUrl,
+      choices: [{ text: "受け取る", next: 9 }, { text: "断る", next: 10 }] },
+    { id: 12, text: "スマホが爆発、意識を失った君は見知らぬ病室で目覚める。脱出？", imageUrl: imgSampleUrl,
+      choices: [{ text: "脱出する", next: 26 }, { text: "脱出しない", next: 28 }] },
+    { id: 13, text: "男の言葉を無視して通りを歩くと、車に轢かれそうになる。避ける？", imageUrl: imgSampleUrl,
+      choices: [{ text: "避ける", next: 7 }, { text: "避けない", next: 15 }] },
+    { id: 14, text: "熱暴走したスマホが奇妙な音を発し続ける。録音を停止？", imageUrl: imgSampleUrl,
+      choices: [{ text: "停止する", next: 21 }, { text: "停止しない", next: 24 }] },
+    { id: 15, text: "地面が揺れ、君は地中深くに吸い込まれる感覚に襲われる。抵抗する？", imageUrl: imgSampleUrl,
+      choices: [{ text: "抵抗する", next: 27 }, { text: "抵抗しない", next: 6 }] },
+    { id: 16, text: "地下鉄の奥に近づいた結果（ダイスロール）2-6:40 7-9:42 10-12:44", imageUrl: imgSampleUrl,
+      choices: [{ text: "2-6", next: 40 }, { text: "7-9", next: 42 }, { text: "10-12", next: 44 }] },
+    { id: 17, text: "地下鉄の奥、誰もいないホームに落ちる影。近づく？", imageUrl: imgSampleUrl,
+      choices: [{ text: "近づく", next: 16 }, { text: "近づかない", next: 18 }] },
+    { id: 18, text: "影が突然人型になり、君に話しかけてくる。「戻れ」と。従う？", imageUrl: imgSampleUrl,
+      choices: [{ text: "従う", next: 31 }, { text: "従わない", next: 33 }] },
+    { id: 19, text: "追いかけた結果（ダイスロール）2-6:36 7-9:38 10-12:41", imageUrl: imgSampleUrl,
+      choices: [{ text: "2-6", next: 36 }, { text: "7-9", next: 38 }, { text: "10-12", next: 41 }] },
+    { id: 20, text: "警察は手形を「悪戯」と片づける。証拠を探す？", imageUrl: imgSampleUrl,
+      choices: [{ text: "探す", next: 29 }, { text: "探さない", next: 10 }] },
+    { id: 21, text: "音を停止した直後、部屋が一瞬真っ暗になる。確認する？", imageUrl: imgSampleUrl,
+      choices: [{ text: "確認する", next: 43 }, { text: "確認しない", next: 45 }] },
+    { id: 22, text: "USBには「Shibuya_Ghost_Project」と記されたファイル。開く？", imageUrl: imgSampleUrl,
+      choices: [{ text: "開く", next: 46 }, { text: "開かない", next: 48 }] },
+    { id: 23, text: "自分で調査を始めると、過去の事件が浮かび上がる。追う？", imageUrl: imgSampleUrl,
+      choices: [{ text: "追う", next: 19 }, { text: "追わない", next: 17 }] },
+    { id: 24, text: "スマホが奇怪な映像を投影し始める。記録する？", imageUrl: imgSampleUrl,
+      choices: [{ text: "記録する", next: 49 }, { text: "記録しない", next: 50 }] },
+    { id: 25, text: "USBを捨てた直後、街中のモニターが君の名前を映す。逃げる？", imageUrl: imgSampleUrl,
+      choices: [{ text: "逃げる", next: 20 }, { text: "逃げない", next: 21 }] },
+    { id: 26, text: "病室には監視カメラがある。壊す？", imageUrl: imgSampleUrl,
+      choices: [{ text: "壊す", next: 38 }, { text: "壊さない", next: 40 }] },
+    { id: 27, text: "闇の中で声がする。「知りたいか？」答える？", imageUrl: imgSampleUrl,
+      choices: [{ text: "答える", next: 44 }, { text: "答えない", next: 46 }] },
+    { id: 28, text: "点滴に謎の液体が混ざっている。抜く？", imageUrl: imgSampleUrl,
+      choices: [{ text: "抜く", next: 29 }, { text: "抜かない", next: 31 }] },
+    { id: 29, text: "昔の新聞記事に、君と同じ名前の失踪者が出てくる。調べる？", imageUrl: imgSampleUrl,
+      choices: [{ text: "調べる", next: 35 }, { text: "調べない", next: 37 }] },
+    { id: 30, text: "何かが起きる（ダイスロール）2-6:6 7-9:8 10-12:12", imageUrl: imgSampleUrl,
+      choices: [{ text: "2-6", next: 6 }, { text: "7-9", next: 8 }, { text: "10-12", next: 12 }] },
+    { id: 31, text: "地下通路に降りる階段がある。降りる？", imageUrl: imgSampleUrl,
+      choices: [{ text: "降りる", next: 16 }, { text: "降りない", next: 18 }] },
+    { id: 32, text: "その先に君と同じ顔の人物が立っている。話す？", imageUrl: imgSampleUrl,
+      choices: [{ text: "話す", next: 34 }, { text: "話さない", next: 36 }] },
+    { id: 33, text: "声の主は君の“別の人生”の記録を見せる。受け入れる？", imageUrl: imgSampleUrl,
+      choices: [{ text: "受け入れる", next: 39 }, { text: "拒否する", next: 41 }] },
+    { id: 34, text: "鏡の中の自分が動かない。触る？", imageUrl: imgSampleUrl,
+      choices: [{ text: "触る", next: 43 }, { text: "触らない", next: 45 }] },
+    { id: 35, text: "記録は君が10年前に死亡していることを示す。信じる？", imageUrl: imgSampleUrl,
+      choices: [{ text: "信じる", next: 47 }, { text: "信じない", next: 48 }] },
+    { id: 36, text: "その人物は君に警告する。「戻れるのは1度だけ」従う？", imageUrl: imgSampleUrl,
+      choices: [{ text: "従う", next: 44 }, { text: "従わない", next: 46 }] },
+    { id: 37, text: "記事の場所に向かうと、祠がある。扉を開ける？", imageUrl: imgSampleUrl,
+      choices: [{ text: "開ける", next: 49 }, { text: "開けない", next: 50 }] },
+    { id: 38, text: "カメラを壊すとアラームが鳴り響く。隠れる？", imageUrl: imgSampleUrl,
+      choices: [{ text: "隠れる", next: 42 }, { text: "隠れない", next: 43 }] },
+    { id: 39, text: "“別の君”が手を差し伸べる。「この世界を選ぶ？」握る？", imageUrl: imgSampleUrl,
+      choices: [{ text: "握る", next: 50 }, { text: "握らない", next: 48 }] },
+    { id: 40, text: "壊した結果（ダイスロール）2-6:45 7-9:47 10-12:49", imageUrl: imgSampleUrl,
+      choices: [{ text: "2-6", next: 45 }, { text: "7-9", next: 47 }, { text: "10-12", next: 49 }] },
+    { id: 41, text: "自分の記憶が一部改ざんされていたことを思い出す。抗う？", imageUrl: imgSampleUrl,
+      choices: [{ text: "抗う", next: 44 }, { text: "抗わない", next: 46 }] },
+    { id: 42, text: "病院の裏口から脱出。外には誰もいない東京。探索する？", imageUrl: imgSampleUrl,
+      choices: [{ text: "探索する", next: 47 }, { text: "探索しない", next: 50 }] },
+    { id: 43, text: "部屋に“君”が2人いる。どちらが本物か？", imageUrl: imgSampleUrl,
+      choices: [
+        { text: "1人目", next: 18 },
+        { text: "2人目", next: 39 }
+      ]
+    },
+    { id: 44, text: "君は真実を選んだ。すべてを知った上で戻るか？", imageUrl: imgSampleUrl,
+      choices: [{ text: "戻る", next: 50 }, { text: "戻らない", next: 1 }] },
+    { id: 45, text: "君は選ばなかった。世界は静かに終わりを迎える。", imageUrl: imgSampleUrl,
+      choices: [{ text: "再開", next: 1 }, { text: "終了", next: 50 }] },
+    { id: 46, text: "君の記憶は改ざんされていた。元の自分に戻る？", imageUrl: imgSampleUrl,
+      choices: [{ text: "戻る", next: 42 }, { text: "戻らない", next: 38 }] },
+    { id: 47, text: "東京は実験都市だった。目覚める？", imageUrl: imgSampleUrl,
+      choices: [{ text: "目覚める", next: 1 }, { text: "目覚めない", next: "END" }] },
+    { id: 48, text: "全てを捨てて平凡な日常へ戻る。", imageUrl: imgSampleUrl,
+      choices: [{ text: "戻る", next: 1 }, { text: "終わる", next: "END" }] },
+    { id: 49, text: "全ての謎が繋がった。世界は君を中心に動いていた。", imageUrl: imgSampleUrl,
+      choices: [{ text: "終わる", next: "END" }, { text: "終わる", next: "END" }] },
+    { id: 50, text: "本当の君は今どこにいる？これで終わりにする？", imageUrl: imgSampleUrl,
+      choices: [{ text: "終わる", next: "END" }, { text: "もう一度", next: 1 }] }
+  ],
+
+          };
+          this.nodes = JSON.parse(JSON.stringify(samples[type]));
+          this.currentNodeId = 0;
+          this.playingNodeId = 0;
+          this.nextId = this.nodes.length;
+        },
+        hasDiceBranch(node) {
+          // どれかの選択肢にminDice/maxDiceが設定されていればtrue
+          return node.choices.some(c => c.minDice !== undefined && c.maxDice !== undefined && c.minDice !== null && c.maxDice !== null);
+        },
+        rollDiceForNode() {
+          // 2d6を振る
+          const dice1 = Math.floor(Math.random() * 6) + 1;
+          const dice2 = Math.floor(Math.random() * 6) + 1;
+          const total = dice1 + dice2;
+          this.diceResult = total;
+          // 合致する選択肢を探す
+          const node = this.playingNode;
+          const found = node.choices.find(c => c.minDice !== undefined && c.maxDice !== undefined && c.minDice !== null && c.maxDice !== null && total >= c.minDice && total <= c.maxDice && c.next != null);
+          if (found) {
+            setTimeout(() => {
+              this.goTo(found.next);
+              this.diceResult = null;
+            }, 800);
+          }
+        },
+        findUnreachableNodes(sample) {
+          // すべてのノードIDを取得
+          const allNodeIds = new Set(sample.map(n => n.id));
+          // すべての遷移先IDを取得
+          const reachableIds = new Set();
+          sample.forEach(node => {
+            node.choices.forEach(choice => {
+              if (choice.next !== null) {
+                reachableIds.add(choice.next);
+              }
+            });
+          });
+          // 到達不可能なノードを特定
+          return Array.from(allNodeIds).filter(id => !reachableIds.has(id) && id !== 0);
+        },
+
+      },
+      mounted() {
+        // クエリパラメータチェック
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('play') === 'true') {
+          this.playMode = true;
+          this.playingNodeId = 1;
+        }
+        this.loadSample(1);
+      }
+    });
+  </script>
+</body>
+</html>
