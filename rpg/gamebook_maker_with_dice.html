@@ -79,7 +79,7 @@
 /* .reset-btn を画面左上の≡ボタンに配置して */
     .reset-btn {
       position: fixed;
-      top: 10px;
+      bottom: 10px;
       left: 10px;
       padding: 10px 15px;
       background: #fff;
@@ -89,7 +89,7 @@
       text-align: center;
       text-decoration: none;
       color: black;
-      font-size: 1.8rem;
+      font-size: 1.2rem;
     }
     /* .reset-btn:hover { background: #ddd; } */
     /* .reset-btn:active { background: #bbb; } */
@@ -120,8 +120,6 @@
     <template v-if="playMode">
       <div class="play-view">
         <!-- <h2>プレイモード</h2> -->
-         <!-- ダイスロールボタン クリックすると2から12の数値を表示 -->
-<button @click="diceResult = Math.floor(Math.random() * 11) + 2" class="btn">🎲<span v-if="diceResult !== null" style="margin:8px 0;">:{{ diceResult }}</span></button>
 
 
 
@@ -131,6 +129,12 @@
           </div>
           <p class="playingNode-text">{{ playingNode.text }}</p>
           <div v-if="!playingNode.choices[0].next && !playingNode.choices[1].next" class="end">エンディング</div>
+
+          <div v-if="hasDiceBranch(playingNode)">
+            <!-- ダイスロールボタン クリックすると2から12の数値を表示 -->
+            <button @click="diceResult = Math.floor(Math.random() * 11) + 2" class="btn">🎲<span v-if="diceResult !== null" style="margin:8px 0;">:{{ diceResult }}</span></button>
+          </div>
+
           <div v-if="hasDiceBranch(playingNode)">
             <button @click="rollDiceForNode" class="btn">ダイスで分岐</button>
             <div v-if="diceResult !== null" style="margin:8px 0;">ダイス結果: <strong>{{ diceResult }}</strong></div>
