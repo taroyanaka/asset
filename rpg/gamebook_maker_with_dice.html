@@ -92,6 +92,10 @@
     }
     /* .reset-btn:hover { background: #ddd; } */
     /* .reset-btn:active { background: #bbb; } */
+    .go-to-btn {
+      margin-bottom: 0.6rem;
+    }
+
 
 
 
@@ -120,7 +124,7 @@
           </div>
           <div v-else>
             <div v-for="(choice, i) in playingNode.choices" v-if="choice.text && choice.next != null">
-              <button @click="goTo(choice.next)" class="btn">{{ choice.text }}</button>
+              <button @click="goTo(choice.next)" class="btn go-to-btn">{{ choice.text }}</button>
             </div>
           </div>
         </div>
