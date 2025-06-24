@@ -204,7 +204,10 @@
       </div>
 
       <div>
-        <button @click="playMode = true" class="btn">プレイ</button>
+        <!-- <button @click="playMode = true" class="btn">プレイ</button> -->
+         <!-- play=trueのgetparamをつけてリンクジャンプ -->
+        <a :href="'?play=true'" class="btn">プレイモードへ</a>
+
         <button @click="exportJSON" class="btn">JSON出力</button>
         <button @click="loadSample(1)" class="btn">サンプル1</button>
 
