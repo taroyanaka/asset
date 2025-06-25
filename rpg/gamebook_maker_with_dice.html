@@ -96,6 +96,10 @@
     .go-to-btn {
       margin-bottom: 1.2rem;
     }
+    .dice-button {
+
+      margin-bottom: 1.2rem;
+    }
 
     @media screen and (orientation: landscape) {
       .fullscreen-image {
@@ -129,21 +133,30 @@
           </div>
           <p class="playingNode-text">{{ playingNode.text }}</p>
           <div v-if="!playingNode.choices[0].next && !playingNode.choices[1].next" class="end">エンディング</div>
-
-          <div v-if="hasDiceBranch(playingNode)">
-            <!-- ダイスロールボタン クリックすると2から12の数値を表示 -->
-            <button @click="diceResult = Math.floor(Math.random() * 11) + 2" class="btn">🎲<span v-if="diceResult !== null" style="margin:8px 0;">:{{ diceResult }}</span></button>
+          <!-- {{playingNode}} -->
+          <!-- choicesに🎲が含まれている場合 -->
+          <div v-if="playingNode.choices.some(c => c.text.includes('🎲'))" class="dice-button">
+            <!-- <span>ダイスを振る</span> -->
+<button @click="diceResult = Math.floor(Math.random() * 11) + 2" class="btn">
+  <div v-if="diceResult === null">ダイスを振る🎲</div>
+  <span v-if="diceResult !== null" style="margin:8px 0;">
+  結果🎲:{{ diceResult }}
+  </span>
+</button>
+          </div>
+          <div>
+          <div v-for="(choice, i) in playingNode.choices" v-if="choice.text && choice.next != null">
+            <button @click="goTo(choice.next)" class="btn go-to-btn">{{ choice.text }}</button>
+          </div>
           </div>
 
-          <div v-if="hasDiceBranch(playingNode)">
+          <!-- <div v-if="hasDiceBranch(playingNode)">
             <button @click="rollDiceForNode" class="btn">ダイスで分岐</button>
             <div v-if="diceResult !== null" style="margin:8px 0;">ダイス結果: <strong>{{ diceResult }}</strong></div>
           </div>
           <div v-else>
-            <div v-for="(choice, i) in playingNode.choices" v-if="choice.text && choice.next != null">
-              <button @click="goTo(choice.next)" class="btn go-to-btn">{{ choice.text }}</button>
-            </div>
-          </div>
+          </div> -->
+
         </div>
         <button @click="resetPlay" class="reset-btn" alt="最初に戻る">≡</button>
       </div>
@@ -184,25 +197,11 @@
           <label>選択肢1:</label>
           <input v-model="currentNode.choices[0].text" placeholder="テキスト" />
           <input v-model.number="currentNode.choices[0].next" type="number" placeholder="遷移先ID" />
-          <div style="display:flex;gap:4px;align-items:center;">
-            <label style="margin:0;">minDice:</label>
-            <input v-model.number="currentNode.choices[0].minDice" type="number" min="2" max="12" style="width:60px;" placeholder="2" />
-            <label style="margin:0;">maxDice:</label>
-            <input v-model.number="currentNode.choices[0].maxDice" type="number" min="2" max="12" style="width:60px;" placeholder="12" />
-            <span style="font-size:12px;color:#888;">(2d6分岐用)</span>
-          </div>
         </div>
         <div>
           <label>選択肢2:</label>
           <input v-model="currentNode.choices[1].text" placeholder="テキスト" />
           <input v-model.number="currentNode.choices[1].next" type="number" placeholder="遷移先ID" />
-          <div style="display:flex;gap:4px;align-items:center;">
-            <label style="margin:0;">minDice:</label>
-            <input v-model.number="currentNode.choices[1].minDice" type="number" min="2" max="12" style="width:60px;" placeholder="2" />
-            <label style="margin:0;">maxDice:</label>
-            <input v-model.number="currentNode.choices[1].maxDice" type="number" min="2" max="12" style="width:60px;" placeholder="12" />
-            <span style="font-size:12px;color:#888;">(2d6分岐用)</span>
-          </div>
         </div>
       </div>
 
@@ -454,10 +453,10 @@ resetPlay() {
     { id: 47, text: "東京は実験都市だった。目覚める？", imageUrl: imgSampleUrl,
       choices: [{ text: "目覚める", next: 1 }, { text: "目覚めない", next: "END" }] },
     { id: 48, text: "全てを捨てて平凡な日常へ戻る。", imageUrl: imgSampleUrl,
-      choices: [{ text: "戻る", next: 1 }, { text: "終わる", next: "END" }] },
+      choices: [{ text: "戻る", next: 50 }, { text: "戻らない", next: 1 }] },
     { id: 49, text: "全ての謎が繋がった。世界は君を中心に動いていた。", imageUrl: imgSampleUrl,
-      choices: [{ text: "終わる", next: "END" }, { text: "終わる", next: "END" }] },
-    { id: 50, text: "本当の君は今どこにいる？これで終わりにする？", imageUrl: imgSampleUrl,
+      choices: [{ text: "終わる", next: "END" }, { text: "もう一度", next: 1 }] },
+    { id: 50, text: "本当の君は今どこにいる", imageUrl: imgSampleUrl,
       choices: [{ text: "終わる", next: "END" }, { text: "もう一度", next: 1 }] }
   ],
 
