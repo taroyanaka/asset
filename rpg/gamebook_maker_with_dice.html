@@ -193,16 +193,13 @@
             <img :src="currentNode.imageUrl" alt="ノード画像" style="max-width:200px; max-height:150px; border:1px solid #ccc; border-radius:4px;" />
           </div>
         </div>
-        <div>
-          <label>選択肢1:</label>
-          <input v-model="currentNode.choices[0].text" placeholder="テキスト" />
-          <input v-model.number="currentNode.choices[0].next" type="number" placeholder="遷移先ID" />
+        <div v-for="(choice, i) in currentNode.choices" :key="i" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <label>選択肢{{ i + 1 }}:</label>
+          <input v-model="choice.text" placeholder="テキスト" />
+          <input v-model.number="choice.next" type="number" placeholder="遷移先ID" />
+          <button @click="removeChoice(i)" v-if="currentNode.choices.length > 1" class="btn" style="font-size:1.2rem;padding:2px 8px;">削除</button>
         </div>
-        <div>
-          <label>選択肢2:</label>
-          <input v-model="currentNode.choices[1].text" placeholder="テキスト" />
-          <input v-model.number="currentNode.choices[1].next" type="number" placeholder="遷移先ID" />
-        </div>
+        <button @click="addChoice" class="btn" style="font-size:1.2rem;padding:2px 8px;">選択肢を追加</button>
       </div>
 
       <div class="graph-view">
@@ -500,6 +497,16 @@ resetPlay() {
           });
           // 到達不可能なノードを特定
           return Array.from(allNodeIds).filter(id => !reachableIds.has(id) && id !== 0);
+        },
+        addChoice() {
+          if (this.currentNode) {
+            this.currentNode.choices.push({ text: '', next: null });
+          }
+        },
+        removeChoice(i) {
+          if (this.currentNode && this.currentNode.choices.length > 1) {
+            this.currentNode.choices.splice(i, 1);
+          }
         },
 
       },
